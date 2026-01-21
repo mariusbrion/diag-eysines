@@ -113,11 +113,21 @@
             margin-bottom: 5px;
         }
 
+        /* Style pour le contrôle des couches standard en bas à gauche */
+        .leaflet-bottom .leaflet-control-layers {
+            margin-bottom: 20px;
+            margin-left: 20px;
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
             #custom-legend {
                 width: 220px;
                 font-size: 0.9rem;
+            }
+            .leaflet-bottom .leaflet-control-layers {
+                margin-bottom: 10px;
+                margin-left: 10px;
             }
         }
     </style>
@@ -156,12 +166,27 @@
         // 1. Initialisation de la carte (coordonnées centrées sur Bordeaux/St-Médard comme votre base)
         const map = L.map('map').setView([44.87, -0.71], 14);
 
-        // Fond de carte élégant et neutre
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        // Fonds de carte
+        const voyagerLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             subdomains: 'abcd',
             maxZoom: 20
-        }).addTo(map);
+        });
+
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            maxZoom: 19
+        });
+
+        // Ajouter le fond de carte par défaut
+        voyagerLayer.addTo(map);
+
+        // Contrôle des fonds de carte en bas à gauche
+        const baseMaps = {
+            "Plan": voyagerLayer,
+            "Satellite": satelliteLayer
+        };
+        L.control.layers(baseMaps, null, { position: 'bottomleft' }).addTo(map);
 
         // Stockage des couches chargées
         const layers = {};
@@ -172,7 +197,7 @@
             {
                 id: 'traverse',
                 url: 'traverse.geojson',
-                name: 'Traversée dangereuse',
+                name: 'Traversée non indiquée', // Nom modifié
                 category: 'signalisation',
                 color: '#e74c3c', // Rouge
                 weight: 5
@@ -197,17 +222,47 @@
             {
                 id: 'terreplein',
                 url: 'terreplein.geojson',
-                name: 'Terre-plein accidentogène',
+                name: 'Terre-plein', // Nom modifié
                 category: 'amenagement',
                 color: '#e67e22', // Orange
                 weight: 3
+            },
+            // Nouvelles couches ajoutées
+            {
+                id: 'bandes',
+                url: 'bandes.geojson',
+                name: 'Bandes cyclables étroites',
+                category: 'signalisation',
+                color: '#3498db', // Bleu clair
+                weight: 4
+            },
+            {
+                id: 'marquages',
+                url: 'marquages.geojson',
+                name: 'Marquage effacé',
+                category: 'signalisation',
+                color: '#95a5a6', // Gris
+                weight: 4,
+                dashArray: '5, 5' // Ligne pointillée
+            },
+            {
+                id: 'revetement',
+                url: 'revetement.geojson',
+                name: 'Revêtement défectueux',
+                category: 'amenagement',
+                color: '#7f8c8d', // Gris foncé
+                weight: 5,
+                fillOpacity: 0.5
             }
         ];
 
-        // Fonction pour créer les popups (garde la logique des photos)
+        // Fonction pour créer les popups (mise à jour pour utiliser la description)
         function onEachFeature(feature, layer) {
             let content = '<div class="popup-content">';
-            content += `<b>${feature.properties.Notes || 'Point de diagnostic'}</b>`;
+            
+            // Utilise la description si disponible, sinon Notes, sinon le texte par défaut
+            const description = feature.properties.description || feature.properties.Notes || 'Point de diagnostic';
+            content += `<b>${description}</b>`;
             
             if (feature.properties.Date) {
                 content += `<small>Date : ${feature.properties.Date}</small><br>`;
@@ -221,8 +276,8 @@
             
             layer.bindPopup(content);
 
-            // Tooltip au survol
-            layer.bindTooltip(feature.properties.Notes || "Détails", { sticky: true });
+            // Tooltip au survol utilisant la description
+            layer.bindTooltip(description, { sticky: true });
         }
 
         // Fonction pour charger et ajouter une couche
@@ -239,7 +294,8 @@
                             weight: config.weight,
                             opacity: 0.8,
                             fillColor: config.color,
-                            fillOpacity: config.fillOpacity || 0.2
+                            fillOpacity: config.fillOpacity || 0.2,
+                            dashArray: config.dashArray || null
                         };
                     },
                     pointToLayer: function(feature, latlng) {
@@ -278,7 +334,7 @@
             div.className = 'layer-item';
             div.innerHTML = `
                 <input type="checkbox" id="chk-${config.id}" checked>
-                <span class="symbol" style="background-color: ${config.color}"></span>
+                <span class="symbol" style="background-color: ${config.color}; border-bottom: ${config.dashArray ? '2px dashed ' + config.color : 'none'}; height: ${config.dashArray ? '0' : '12px'}"></span>
                 <label for="chk-${config.id}">${config.name}</label>
             `;
 
