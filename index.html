@@ -41,7 +41,6 @@
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             padding: 15px;
-            transition: transform 0.3s ease;
         }
 
         .legend-header {
@@ -76,7 +75,7 @@
             align-items: center;
             margin-bottom: 8px;
             cursor: pointer;
-            padding: 4px;
+            padding: 6px;
             border-radius: 4px;
             transition: background 0.2s;
         }
@@ -90,13 +89,54 @@
             cursor: pointer;
         }
 
+        .layer-item label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
         .symbol {
-            width: 12px;
-            height: 12px;
-            margin-right: 8px;
-            border-radius: 2px;
+            width: 14px;
+            height: 14px;
+            margin-right: 10px;
+            border-radius: 3px;
             display: inline-block;
             border: 1px solid rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        /* Bouton de changement de fond personnalisé */
+        .basemap-toggle {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 50px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            border: 2px solid #fff;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .basemap-toggle:hover {
+            background: var(--bg-light);
+            transform: translateY(-2px);
+        }
+
+        .basemap-toggle-icon {
+            width: 20px;
+            height: 20px;
+            background: #eee;
+            border-radius: 4px;
+            border: 1px solid #ccc;
         }
 
         .popup-photo {
@@ -113,21 +153,11 @@
             margin-bottom: 5px;
         }
 
-        /* Style pour le contrôle des couches standard en bas à gauche */
-        .leaflet-bottom .leaflet-control-layers {
-            margin-bottom: 20px;
-            margin-left: 20px;
-        }
-
         /* Responsive */
         @media (max-width: 600px) {
             #custom-legend {
                 width: 220px;
                 font-size: 0.9rem;
-            }
-            .leaflet-bottom .leaflet-control-layers {
-                margin-bottom: 10px;
-                margin-left: 10px;
             }
         }
     </style>
@@ -140,19 +170,16 @@
         </div>
         
         <div id="category-list">
-            <!-- Catégorie Aménagement -->
             <div class="category-block">
                 <span class="category-title">Aménagement</span>
                 <div id="cat-amenagement"></div>
             </div>
 
-            <!-- Catégorie Signalisation -->
             <div class="category-block">
                 <span class="category-title">Signalisation</span>
                 <div id="cat-signalisation"></div>
             </div>
 
-            <!-- Catégorie Comportement -->
             <div class="category-block">
                 <span class="category-title">Comportement</span>
                 <div id="cat-comportement"></div>
@@ -160,11 +187,17 @@
         </div>
     </div>
 
+    <!-- Bouton de changement de fond -->
+    <button class="basemap-toggle" onclick="toggleBasemap()">
+        <div class="basemap-toggle-icon" id="toggle-preview"></div>
+        <span id="toggle-text">Passer en Satellite</span>
+    </button>
+
     <div id="map"></div>
 
     <script>
-        // 1. Initialisation de la carte (coordonnées centrées sur Bordeaux/St-Médard comme votre base)
-        const map = L.map('map').setView([44.87, -0.71], 14);
+        // 1. Initialisation de la carte (focus sur Eysines)
+        const map = L.map('map').setView([44.87826446160561, -0.6565541041113465], 14);
 
         // Fonds de carte
         const voyagerLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -178,28 +211,34 @@
             maxZoom: 19
         });
 
-        // Ajouter le fond de carte par défaut
         voyagerLayer.addTo(map);
 
-        // Contrôle des fonds de carte en bas à gauche
-        const baseMaps = {
-            "Plan": voyagerLayer,
-            "Satellite": satelliteLayer
-        };
-        L.control.layers(baseMaps, null, { position: 'bottomleft' }).addTo(map);
+        // Logique de bascule du fond de carte
+        let isSatellite = false;
+        function toggleBasemap() {
+            if (isSatellite) {
+                map.removeLayer(satelliteLayer);
+                voyagerLayer.addTo(map);
+                document.getElementById('toggle-text').innerText = "Passer en Satellite";
+                document.getElementById('toggle-preview').style.background = "#eee";
+            } else {
+                map.removeLayer(voyagerLayer);
+                satelliteLayer.addTo(map);
+                document.getElementById('toggle-text').innerText = "Passer en Plan";
+                document.getElementById('toggle-preview').style.background = "#2c3e50";
+            }
+            isSatellite = !isSatellite;
+        }
 
-        // Stockage des couches chargées
         const layers = {};
 
-        // Configuration des fichiers et de leur style
-        // Vous pouvez facilement ajouter de nouveaux fichiers ici
         const layerConfigs = [
             {
                 id: 'traverse',
                 url: 'traverse.geojson',
-                name: 'Traversée non indiquée', // Nom modifié
+                name: 'Traversée non indiquée',
                 category: 'signalisation',
-                color: '#e74c3c', // Rouge
+                color: '#e74c3c',
                 weight: 5
             },
             {
@@ -207,7 +246,7 @@
                 url: 'giration.geojson',
                 name: 'Angle de giration serré',
                 category: 'amenagement',
-                color: '#9b59b6', // Violet
+                color: '#9b59b6',
                 weight: 4
             },
             {
@@ -215,25 +254,24 @@
                 url: 'cone.geojson',
                 name: 'Cône de visibilité',
                 category: 'amenagement',
-                color: '#f1c40f', // Jaune
+                color: '#f1c40f',
                 weight: 2,
                 fillOpacity: 0.4
             },
             {
                 id: 'terreplein',
                 url: 'terreplein.geojson',
-                name: 'Terre-plein', // Nom modifié
+                name: 'Terre-plein',
                 category: 'amenagement',
-                color: '#e67e22', // Orange
+                color: '#e67e22',
                 weight: 3
             },
-            // Nouvelles couches ajoutées
             {
                 id: 'bandes',
                 url: 'bandes.geojson',
                 name: 'Bandes cyclables étroites',
                 category: 'signalisation',
-                color: '#3498db', // Bleu clair
+                color: '#3498db',
                 weight: 4
             },
             {
@@ -241,26 +279,23 @@
                 url: 'marquages.geojson',
                 name: 'Marquage effacé',
                 category: 'signalisation',
-                color: '#95a5a6', // Gris
+                color: '#95a5a6',
                 weight: 4,
-                dashArray: '5, 5' // Ligne pointillée
+                dashArray: '5, 5'
             },
             {
                 id: 'revetement',
                 url: 'revetement.geojson',
                 name: 'Revêtement défectueux',
                 category: 'amenagement',
-                color: '#7f8c8d', // Gris foncé
+                color: '#7f8c8d',
                 weight: 5,
                 fillOpacity: 0.5
             }
         ];
 
-        // Fonction pour créer les popups (mise à jour pour utiliser la description)
         function onEachFeature(feature, layer) {
             let content = '<div class="popup-content">';
-            
-            // Utilise la description si disponible, sinon Notes, sinon le texte par défaut
             const description = feature.properties.description || feature.properties.Notes || 'Point de diagnostic';
             content += `<b>${description}</b>`;
             
@@ -269,18 +304,16 @@
             }
             
             if (feature.properties.Photo) {
-                // Gestion de l'erreur si l'image ne charge pas
                 content += `<img src="${feature.properties.Photo}" class="popup-photo" onerror="this.style.display='none'">`;
             }
             content += '</div>';
             
             layer.bindPopup(content);
 
-            // Tooltip au survol utilisant la description
-            layer.bindTooltip(description, { sticky: true });
+            // Remise du texte basique pour le survol
+            layer.bindTooltip("Détails du diagnostic", { sticky: true });
         }
 
-        // Fonction pour charger et ajouter une couche
         async function loadGeoLayer(config) {
             try {
                 const response = await fetch(config.url);
@@ -312,20 +345,14 @@
                 });
 
                 layers[config.id] = geoLayer;
-                
-                // Par défaut, on affiche la couche
                 geoLayer.addTo(map);
-                
-                // Ajouter à l'interface de la légende
                 addLayerToUI(config);
 
             } catch (error) {
                 console.error(`Erreur chargement ${config.url}:`, error);
-                // On crée quand même l'UI en grisé ou on l'ignore
             }
         }
 
-        // Ajouter la couche dans le menu HTML
         function addLayerToUI(config) {
             const container = document.getElementById(`cat-${config.category}`);
             if (!container) return;
@@ -334,10 +361,13 @@
             div.className = 'layer-item';
             div.innerHTML = `
                 <input type="checkbox" id="chk-${config.id}" checked>
-                <span class="symbol" style="background-color: ${config.color}; border-bottom: ${config.dashArray ? '2px dashed ' + config.color : 'none'}; height: ${config.dashArray ? '0' : '12px'}"></span>
-                <label for="chk-${config.id}">${config.name}</label>
+                <label for="chk-${config.id}">
+                    <span class="symbol" style="background-color: ${config.color}; border-bottom: ${config.dashArray ? '2px dashed #333' : '1px solid rgba(0,0,0,0.2)'}"></span>
+                    ${config.name}
+                </label>
             `;
 
+            // Ajout d'un écouteur sur la case à cocher
             div.querySelector('input').addEventListener('change', (e) => {
                 if (e.target.checked) {
                     map.addLayer(layers[config.id]);
@@ -349,7 +379,6 @@
             container.appendChild(div);
         }
 
-        // Chargement initial de toutes les couches configurées
         window.onload = () => {
             layerConfigs.forEach(config => loadGeoLayer(config));
         };
