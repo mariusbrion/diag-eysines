@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Aménagements Cyclables</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --bg-light: #f8f9fa;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100%;
+            z-index: 1;
+        }
+
+        /* Panneau de contrôle personnalisé */
+        #custom-legend {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            width: 280px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            padding: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .legend-header {
+            border-bottom: 2px solid var(--bg-light);
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+        }
+
+        .legend-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .category-block {
+            margin-bottom: 20px;
+        }
+
+        .category-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            display: block;
+            border-left: 3px solid var(--accent-color);
+            padding-left: 8px;
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .layer-item:hover {
+            background: var(--bg-light);
+        }
+
+        .layer-item input {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .symbol {
+            width: 12px;
+            height: 12px;
+            margin-right: 8px;
+            border-radius: 2px;
+            display: inline-block;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+
+        .popup-photo {
+            width: 100%;
+            max-width: 250px;
+            border-radius: 4px;
+            margin-top: 8px;
+            display: block;
+        }
+
+        .popup-content b {
+            color: var(--primary-color);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            #custom-legend {
+                width: 220px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="custom-legend">
+        <div class="legend-header">
+            <h2>Diagnostic</h2>
+        </div>
+        
+        <div id="category-list">
+            <!-- Catégorie Aménagement -->
+            <div class="category-block">
+                <span class="category-title">Aménagement</span>
+                <div id="cat-amenagement"></div>
+            </div>
+
+            <!-- Catégorie Signalisation -->
+            <div class="category-block">
+                <span class="category-title">Signalisation</span>
+                <div id="cat-signalisation"></div>
+            </div>
+
+            <!-- Catégorie Comportement -->
+            <div class="category-block">
+                <span class="category-title">Comportement</span>
+                <div id="cat-comportement"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script>
+        // 1. Initialisation de la carte (coordonnées centrées sur Bordeaux/St-Médard comme votre base)
+        const map = L.map('map').setView([44.87, -0.71], 14);
+
+        // Fond de carte élégant et neutre
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        // Stockage des couches chargées
+        const layers = {};
+
+        // Configuration des fichiers et de leur style
+        // Vous pouvez facilement ajouter de nouveaux fichiers ici
+        const layerConfigs = [
+            {
+                id: 'traverse',
+                url: 'traverse.geojson',
+                name: 'Traversée dangereuse',
+                category: 'signalisation',
+                color: '#e74c3c', // Rouge
+                weight: 5
+            },
+            {
+                id: 'giration',
+                url: 'giration.geojson',
+                name: 'Angle de giration serré',
+                category: 'amenagement',
+                color: '#9b59b6', // Violet
+                weight: 4
+            },
+            {
+                id: 'cone',
+                url: 'cone.geojson',
+                name: 'Cône de visibilité',
+                category: 'amenagement',
+                color: '#f1c40f', // Jaune
+                weight: 2,
+                fillOpacity: 0.4
+            },
+            {
+                id: 'terreplein',
+                url: 'terreplein.geojson',
+                name: 'Terre-plein accidentogène',
+                category: 'amenagement',
+                color: '#e67e22', // Orange
+                weight: 3
+            }
+        ];
+
+        // Fonction pour créer les popups (garde la logique des photos)
+        function onEachFeature(feature, layer) {
+            let content = '<div class="popup-content">';
+            content += `<b>${feature.properties.Notes || 'Point de diagnostic'}</b>`;
+            
+            if (feature.properties.Date) {
+                content += `<small>Date : ${feature.properties.Date}</small><br>`;
+            }
+            
+            if (feature.properties.Photo) {
+                // Gestion de l'erreur si l'image ne charge pas
+                content += `<img src="${feature.properties.Photo}" class="popup-photo" onerror="this.style.display='none'">`;
+            }
+            content += '</div>';
+            
+            layer.bindPopup(content);
+
+            // Tooltip au survol
+            layer.bindTooltip(feature.properties.Notes || "Détails", { sticky: true });
+        }
+
+        // Fonction pour charger et ajouter une couche
+        async function loadGeoLayer(config) {
+            try {
+                const response = await fetch(config.url);
+                if (!response.ok) throw new Error('Fichier introuvable');
+                const data = await response.json();
+
+                const geoLayer = L.geoJSON(data, {
+                    style: function(feature) {
+                        return {
+                            color: config.color,
+                            weight: config.weight,
+                            opacity: 0.8,
+                            fillColor: config.color,
+                            fillOpacity: config.fillOpacity || 0.2
+                        };
+                    },
+                    pointToLayer: function(feature, latlng) {
+                        return L.circleMarker(latlng, {
+                            radius: 8,
+                            fillColor: config.color,
+                            color: "#fff",
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.8
+                        });
+                    },
+                    onEachFeature: onEachFeature
+                });
+
+                layers[config.id] = geoLayer;
+                
+                // Par défaut, on affiche la couche
+                geoLayer.addTo(map);
+                
+                // Ajouter à l'interface de la légende
+                addLayerToUI(config);
+
+            } catch (error) {
+                console.error(`Erreur chargement ${config.url}:`, error);
+                // On crée quand même l'UI en grisé ou on l'ignore
+            }
+        }
+
+        // Ajouter la couche dans le menu HTML
+        function addLayerToUI(config) {
+            const container = document.getElementById(`cat-${config.category}`);
+            if (!container) return;
+
+            const div = document.createElement('div');
+            div.className = 'layer-item';
+            div.innerHTML = `
+                <input type="checkbox" id="chk-${config.id}" checked>
+                <span class="symbol" style="background-color: ${config.color}"></span>
+                <label for="chk-${config.id}">${config.name}</label>
+            `;
+
+            div.querySelector('input').addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    map.addLayer(layers[config.id]);
+                } else {
+                    map.removeLayer(layers[config.id]);
+                }
+            });
+
+            container.appendChild(div);
+        }
+
+        // Chargement initial de toutes les couches configurées
+        window.onload = () => {
+            layerConfigs.forEach(config => loadGeoLayer(config));
+        };
+
+    </script>
+</body>
+</html>
