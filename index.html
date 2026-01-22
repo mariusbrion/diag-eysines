@@ -296,21 +296,29 @@
 
         function onEachFeature(feature, layer) {
             let content = '<div class="popup-content">';
-            const description = feature.properties.description || feature.properties.Notes || 'Point de diagnostic';
+            
+            // Propriétés du GeoJSON
+            const props = feature.properties;
+            const description = props.description || props.Notes || 'Point de diagnostic';
+            const photoSrc = props.photo || props.Photo; // Accepte photo ou Photo
+            
             content += `<b>${description}</b>`;
             
-            if (feature.properties.Date) {
-                content += `<small>Date : ${feature.properties.Date}</small><br>`;
+            if (props.Date) {
+                content += `<small>Date : ${props.Date}</small><br>`;
             }
             
-            if (feature.properties.Photo) {
-                content += `<img src="${feature.properties.Photo}" class="popup-photo" onerror="this.style.display='none'">`;
+            // Affichage de la photo si elle existe
+            if (photoSrc) {
+                // On s'assure que le chemin est correct. Si les photos sont dans le même dossier que l'HTML :
+                content += `<img src="${photoSrc}" class="popup-photo" alt="Photo du diagnostic" onerror="this.style.display='none'">`;
             }
+            
             content += '</div>';
             
             layer.bindPopup(content);
 
-            // Remise du texte basique pour le survol
+            // Texte au survol
             layer.bindTooltip("Détails du diagnostic", { sticky: true });
         }
 
@@ -359,15 +367,19 @@
 
             const div = document.createElement('div');
             div.className = 'layer-item';
+            
+            // Création de l'identifiant unique
+            const chkId = `chk-${config.id}`;
+            
             div.innerHTML = `
-                <input type="checkbox" id="chk-${config.id}" checked>
-                <label for="chk-${config.id}">
+                <input type="checkbox" id="${chkId}" checked>
+                <label for="${chkId}">
                     <span class="symbol" style="background-color: ${config.color}; border-bottom: ${config.dashArray ? '2px dashed #333' : '1px solid rgba(0,0,0,0.2)'}"></span>
                     ${config.name}
                 </label>
             `;
 
-            // Ajout d'un écouteur sur la case à cocher
+            // Gestion du clic sur la case ou le label
             div.querySelector('input').addEventListener('change', (e) => {
                 if (e.target.checked) {
                     map.addLayer(layers[config.id]);
