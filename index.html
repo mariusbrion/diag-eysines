@@ -325,12 +325,11 @@
             layer.bindTooltip("Détails du diagnostic", { sticky: true });
         }
 
-        // --- MODIFICATION ICI ---
-        // On change le point de référence pour que le rendu "max" soit atteint dès le zoom 15
+        // --- MODIFICATION POUR RENDU "PHOTO 2" ---
         function calculateHeatRadius(zoom) {
-            // Le rayon de 40px est maintenant atteint au zoom 15. 
-            // La décroissance (0.8) est plus douce pour garder une visibilité dézoomée.
-            return 40 * Math.pow(0.8, 15 - zoom);
+            // Rayon beaucoup plus large (55px) au zoom 15
+            // Et décroissance plus lente pour rester visible au zoom 13-14
+            return 55 * Math.pow(0.85, 15 - zoom);
         }
 
         async function loadGeoLayer(config) {
@@ -346,7 +345,7 @@
                         return [
                             f.geometry.coordinates[1],
                             f.geometry.coordinates[0],
-                            parseFloat(f.properties.intensity) || 0.5
+                            parseFloat(f.properties.intensity) || 0.8
                         ];
                     });
 
@@ -354,8 +353,8 @@
                     
                     const heatLayer = L.heatLayer(heatPoints, {
                         radius: initialRadius,
-                        blur: 15,
-                        max: 0.4, // Un peu plus sensible pour colorer plus tôt
+                        blur: 25, // Flou plus important pour un effet de halo (Photo 2)
+                        max: 0.2, // Très sensible : le rouge apparaît immédiatement même sur un point seul
                         gradient: {
                             0.2: 'blue', 
                             0.4: 'cyan', 
@@ -368,7 +367,7 @@
                     const interactionLayer = L.geoJSON(data, {
                         pointToLayer: function(feature, latlng) {
                             return L.circleMarker(latlng, {
-                                radius: 25, // Zone de clic plus large
+                                radius: 30, // Zone de clic encore plus large
                                 fillColor: "transparent",
                                 color: "transparent",
                                 stroke: false
