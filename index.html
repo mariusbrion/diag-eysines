@@ -328,7 +328,7 @@
         // --- CALCUL DU RAYON RÉINITIALISÉ ---
         function calculateHeatRadius(zoom) {
             // Rayon de 35px pour un zoom de 16
-            return 35 * Math.pow(0.85, 16 - zoom);
+            return 35 * Math.pow(0.85, 15 - zoom);
         }
 
         async function loadGeoLayer(config) {
