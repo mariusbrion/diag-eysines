@@ -358,15 +358,21 @@
                     const heatLayer = L.heatLayer(heatPoints, {
                         radius: initialRadius,
                         blur: 15,
-                        max: 1.0, // Intensité globale à 1.0
-                        gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1: 'red'}
+                        max: 0.5, // Baissé à 0.5 pour que les couleurs chaudes apparaissent dès qu'un point est présent
+                        gradient: {
+                            0.2: 'blue', 
+                            0.4: 'cyan', 
+                            0.6: 'lime', 
+                            0.8: 'yellow', 
+                            1.0: 'red'
+                        }
                     });
 
                     // On ajoute une couche invisible par dessus pour l'interactivité
                     const interactionLayer = L.geoJSON(data, {
                         pointToLayer: function(feature, latlng) {
                             return L.circleMarker(latlng, {
-                                radius: 10,
+                                radius: 20,
                                 fillColor: "transparent",
                                 color: "transparent",
                                 stroke: false
