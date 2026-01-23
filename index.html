@@ -328,7 +328,7 @@
         // --- CALCUL DU RAYON MIS À JOUR ---
         function calculateHeatRadius(zoom) {
             // Rayon de 30px pour un zoom de 15
-            return 30 * Math.pow(0.85, 15 - zoom);
+            return 20 * Math.pow(0.85, 15 - zoom);
         }
 
         async function loadGeoLayer(config) {
@@ -353,7 +353,7 @@
                     const heatLayer = L.heatLayer(heatPoints, {
                         radius: initialRadius,
                         blur: 15,
-                        max: 0.3, // Plus sensible (0.3 au lieu de 0.5) pour marquer davantage les points
+                        max: 0.2, // Plus sensible (0.2 au lieu de 0.5) pour marquer davantage les points
                         gradient: {
                             0.2: 'blue', 
                             0.4: 'cyan', 
