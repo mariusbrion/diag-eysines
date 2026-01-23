@@ -7,6 +7,8 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Heatmap Plugin -->
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -104,6 +106,11 @@
             display: inline-block;
             border: 1px solid rgba(0,0,0,0.2);
             flex-shrink: 0;
+        }
+
+        /* Symbole spécial pour Heatmap */
+        .symbol-heatmap {
+            background: linear-gradient(to right, blue, green, yellow, red);
         }
 
         /* Bouton de changement de fond personnalisé */
@@ -291,16 +298,22 @@
                 color: '#7f8c8d',
                 weight: 5,
                 fillOpacity: 0.5
+            },
+            {
+                id: 'vegetation',
+                url: 'vegetation.geojson',
+                name: 'Densité de végétation',
+                category: 'comportement',
+                isHeatmap: true,
+                color: 'linear-gradient(to right, blue, green, yellow, red)' // Pour la légende
             }
         ];
 
         function onEachFeature(feature, layer) {
             let content = '<div class="popup-content">';
-            
-            // Propriétés du GeoJSON
             const props = feature.properties;
             const description = props.description || props.Notes || 'Point de diagnostic';
-            const photoSrc = props.photo || props.Photo; // Accepte photo ou Photo
+            const photoSrc = props.photo || props.Photo;
             
             content += `<b>${description}</b>`;
             
@@ -308,17 +321,12 @@
                 content += `<small>Date : ${props.Date}</small><br>`;
             }
             
-            // Affichage de la photo si elle existe
             if (photoSrc) {
-                // On s'assure que le chemin est correct. Si les photos sont dans le même dossier que l'HTML :
                 content += `<img src="${photoSrc}" class="popup-photo" alt="Photo du diagnostic" onerror="this.style.display='none'">`;
             }
             
             content += '</div>';
-            
             layer.bindPopup(content);
-
-            // Texte au survol
             layer.bindTooltip("Détails du diagnostic", { sticky: true });
         }
 
@@ -328,32 +336,51 @@
                 if (!response.ok) throw new Error('Fichier introuvable');
                 const data = await response.json();
 
-                const geoLayer = L.geoJSON(data, {
-                    style: function(feature) {
-                        return {
-                            color: config.color,
-                            weight: config.weight,
-                            opacity: 0.8,
-                            fillColor: config.color,
-                            fillOpacity: config.fillOpacity || 0.2,
-                            dashArray: config.dashArray || null
-                        };
-                    },
-                    pointToLayer: function(feature, latlng) {
-                        return L.circleMarker(latlng, {
-                            radius: 8,
-                            fillColor: config.color,
-                            color: "#fff",
-                            weight: 2,
-                            opacity: 1,
-                            fillOpacity: 0.8
-                        });
-                    },
-                    onEachFeature: onEachFeature
-                });
+                let layer;
 
-                layers[config.id] = geoLayer;
-                geoLayer.addTo(map);
+                if (config.isHeatmap) {
+                    // Extraction des points pour la heatmap [lat, lng, intensité]
+                    const heatPoints = data.features.map(f => {
+                        return [
+                            f.geometry.coordinates[1], // Latitude
+                            f.geometry.coordinates[0], // Longitude
+                            0.5 // Intensité par défaut
+                        ];
+                    });
+                    layer = L.heatLayer(heatPoints, {
+                        radius: 25,
+                        blur: 15,
+                        maxZoom: 17,
+                        gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1: 'red'}
+                    });
+                } else {
+                    layer = L.geoJSON(data, {
+                        style: function(feature) {
+                            return {
+                                color: config.color,
+                                weight: config.weight,
+                                opacity: 0.8,
+                                fillColor: config.color,
+                                fillOpacity: config.fillOpacity || 0.2,
+                                dashArray: config.dashArray || null
+                            };
+                        },
+                        pointToLayer: function(feature, latlng) {
+                            return L.circleMarker(latlng, {
+                                radius: 8,
+                                fillColor: config.color,
+                                color: "#fff",
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.8
+                            });
+                        },
+                        onEachFeature: onEachFeature
+                    });
+                }
+
+                layers[config.id] = layer;
+                layer.addTo(map);
                 addLayerToUI(config);
 
             } catch (error) {
@@ -367,19 +394,20 @@
 
             const div = document.createElement('div');
             div.className = 'layer-item';
-            
-            // Création de l'identifiant unique
             const chkId = `chk-${config.id}`;
             
+            const symbolStyle = config.isHeatmap 
+                ? `background: ${config.color};` 
+                : `background-color: ${config.color}; border-bottom: ${config.dashArray ? '2px dashed #333' : '1px solid rgba(0,0,0,0.2)'}`;
+
             div.innerHTML = `
                 <input type="checkbox" id="${chkId}" checked>
                 <label for="${chkId}">
-                    <span class="symbol" style="background-color: ${config.color}; border-bottom: ${config.dashArray ? '2px dashed #333' : '1px solid rgba(0,0,0,0.2)'}"></span>
+                    <span class="symbol ${config.isHeatmap ? 'symbol-heatmap' : ''}" style="${!config.isHeatmap ? symbolStyle : ''}"></span>
                     ${config.name}
                 </label>
             `;
 
-            // Gestion du clic sur la case ou le label
             div.querySelector('input').addEventListener('change', (e) => {
                 if (e.target.checked) {
                     map.addLayer(layers[config.id]);
