@@ -325,11 +325,10 @@
             layer.bindTooltip("Détails du diagnostic", { sticky: true });
         }
 
-        // --- MODIFICATION POUR RENDU "PHOTO 2" ---
+        // --- NOUVELLE LOGIQUE : POINTS MARQUÉS + TENDANCES ---
         function calculateHeatRadius(zoom) {
-            // Rayon beaucoup plus large (55px) au zoom 15
-            // Et décroissance plus lente pour rester visible au zoom 13-14
-            return 55 * Math.pow(0.85, 15 - zoom);
+            // Rayon équilibré pour voir les centres tout en gardant une diffusion
+            return 45 * Math.pow(0.85, 15 - zoom);
         }
 
         async function loadGeoLayer(config) {
@@ -345,7 +344,7 @@
                         return [
                             f.geometry.coordinates[1],
                             f.geometry.coordinates[0],
-                            parseFloat(f.properties.intensity) || 0.8
+                            parseFloat(f.properties.intensity) || 0.6
                         ];
                     });
 
@@ -353,8 +352,8 @@
                     
                     const heatLayer = L.heatLayer(heatPoints, {
                         radius: initialRadius,
-                        blur: 25, // Flou plus important pour un effet de halo (Photo 2)
-                        max: 0.2, // Très sensible : le rouge apparaît immédiatement même sur un point seul
+                        blur: 15, // Moins de flou pour marquer les points critiques
+                        max: 0.8, // Seuil plus haut : seul le "vrai" critique devient rouge vif
                         gradient: {
                             0.2: 'blue', 
                             0.4: 'cyan', 
@@ -367,7 +366,7 @@
                     const interactionLayer = L.geoJSON(data, {
                         pointToLayer: function(feature, latlng) {
                             return L.circleMarker(latlng, {
-                                radius: 30, // Zone de clic encore plus large
+                                radius: 20,
                                 fillColor: "transparent",
                                 color: "transparent",
                                 stroke: false
