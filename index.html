@@ -325,10 +325,10 @@
             layer.bindTooltip("Détails du diagnostic", { sticky: true });
         }
 
-        // --- NOUVELLE LOGIQUE : POINTS MARQUÉS + TENDANCES ---
+        // --- CALCUL DU RAYON RÉINITIALISÉ ---
         function calculateHeatRadius(zoom) {
-            // Rayon équilibré pour voir les centres tout en gardant une diffusion
-            return 45 * Math.pow(0.85, 15 - zoom);
+            // Rayon de 35px pour un zoom de 16
+            return 35 * Math.pow(0.85, 16 - zoom);
         }
 
         async function loadGeoLayer(config) {
@@ -344,7 +344,7 @@
                         return [
                             f.geometry.coordinates[1],
                             f.geometry.coordinates[0],
-                            parseFloat(f.properties.intensity) || 0.6
+                            parseFloat(f.properties.intensity) || 0.5
                         ];
                     });
 
@@ -352,8 +352,8 @@
                     
                     const heatLayer = L.heatLayer(heatPoints, {
                         radius: initialRadius,
-                        blur: 15, // Moins de flou pour marquer les points critiques
-                        max: 0.8, // Seuil plus haut : seul le "vrai" critique devient rouge vif
+                        blur: 15, // Valeur initiale
+                        max: 0.5, // Valeur initiale
                         gradient: {
                             0.2: 'blue', 
                             0.4: 'cyan', 
