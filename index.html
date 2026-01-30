@@ -163,7 +163,7 @@
         /* Agrandissement des photos des popups */
         .popup-photo {
             width: 100%;
-            max-width: 750px; /* 3 fois plus grand que 250px */
+            max-width: 750px; 
             height: auto;
             border-radius: 4px;
             margin-top: 8px;
@@ -171,15 +171,21 @@
         }
 
         /* Ajustement de la largeur des popups Leaflet pour accommoder les grandes photos */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+        }
+
         .leaflet-popup-content {
             width: auto !important;
             max-width: 800px !important;
+            margin: 13px 19px;
         }
 
         .popup-content b {
             color: var(--primary-color);
             display: block;
             margin-bottom: 5px;
+            font-size: 1rem;
         }
 
         @media (max-width: 600px) {
@@ -188,7 +194,7 @@
                 font-size: 0.9rem;
             }
             .popup-photo {
-                max-width: 100%; /* S'adapte sur mobile */
+                max-width: 100%; 
             }
         }
     </style>
@@ -325,7 +331,9 @@
                 content += `<br><img src="${feature.properties.photo || feature.properties.Photo}" class="popup-photo" alt="Photo" onerror="this.style.display='none'">`;
             }
             content += '</div>';
-            layer.bindPopup(content);
+            
+            // Ajout de maxWidth pour permettre aux grandes images de s'afficher correctement
+            layer.bindPopup(content, { maxWidth: 800 });
         }
 
         async function loadGeoLayer(config) {
@@ -357,9 +365,16 @@
 
                         // Condition spéciale pour "COMMUNES" dans la couche métropole
                         if (config.id === 'metropole' && feature.properties && feature.properties.SOUS_THEME === "COMMUNES") {
-                            styleObj.fillColor = '#3498db'; // Bleu pour les communes
+                            styleObj.fillColor = '#3498db'; // Bleu clair
                             styleObj.fillOpacity = 0.4;
                             styleObj.color = '#2980b9';
+                        }
+                        
+                        // Condition spéciale pour "METROPOLE" dans la couche métropole
+                        if (config.id === 'metropole' && feature.properties && feature.properties.SOUS_THEME === "METROPOLE") {
+                            styleObj.fillColor = '#1a5276'; // Bleu foncé
+                            styleObj.fillOpacity = 0.5;
+                            styleObj.color = '#154360';
                         }
 
                         return styleObj;
