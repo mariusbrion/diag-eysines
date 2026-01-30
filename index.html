@@ -9,6 +9,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Leaflet Heatmap Plugin -->
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <!-- Proj4js pour la gestion des projections (EPSG:3945) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -137,14 +139,6 @@
             transform: translateY(-2px);
         }
 
-        .basemap-toggle-icon {
-            width: 20px;
-            height: 20px;
-            background: #eee;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-
         /* Menu contextuel clic droit */
         #context-menu {
             position: absolute;
@@ -202,7 +196,6 @@
         </div>
         
         <div id="category-list">
-            <!-- Section Diagnostics -->
             <div class="category-block">
                 <span class="category-title">Aménagement défaillant</span>
                 <div id="cat-amenagement"></div>
@@ -218,7 +211,6 @@
                 <div id="cat-comportement"></div>
             </div>
 
-            <!-- Section Hors catégorie / Contexte -->
             <div class="category-block" style="border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px;">
                 <span class="category-title">Données de contexte</span>
                 <div id="cat-contexte"></div>
@@ -226,13 +218,10 @@
         </div>
     </div>
 
-    <!-- Bouton de changement de fond -->
     <button class="basemap-toggle" onclick="toggleBasemap()">
-        <div class="basemap-toggle-icon" id="toggle-preview"></div>
         <span id="toggle-text">Passer en Satellite</span>
     </button>
 
-    <!-- Menu contextuel masqué par défaut -->
     <div id="context-menu">
         <div class="context-menu-item" onclick="openGoogleMaps()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
@@ -243,321 +232,133 @@
     <div id="map"></div>
 
     <script>
-        // 1. Initialisation de la carte (focus sur Eysines)
+        // Définition de la projection CC45 (EPSG:3945) pour Bordeaux/Eysines
+        proj4.defs("EPSG:3945","+proj=lcc +lat_1=44.25 +lat_2=45.75 +lat_0=45 +lon_0=3 +x_0=1700000 +y_0=4200000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+
         const map = L.map('map').setView([44.87826446160561, -0.6565541041113465], 14);
 
-        // Fonds de carte
         const voyagerLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
             maxZoom: 20
-        });
+        }).addTo(map);
 
         const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            attribution: 'Tiles &copy; Esri',
             maxZoom: 19
         });
 
-        voyagerLayer.addTo(map);
-
-        // Logique de bascule du fond de carte
         let isSatellite = false;
         function toggleBasemap() {
             if (isSatellite) {
                 map.removeLayer(satelliteLayer);
                 voyagerLayer.addTo(map);
                 document.getElementById('toggle-text').innerText = "Passer en Satellite";
-                document.getElementById('toggle-preview').style.background = "#eee";
             } else {
                 map.removeLayer(voyagerLayer);
                 satelliteLayer.addTo(map);
                 document.getElementById('toggle-text').innerText = "Passer en Plan";
-                document.getElementById('toggle-preview').style.background = "#2c3e50";
             }
             isSatellite = !isSatellite;
         }
 
-        // --- GESTION DU CLIC DROIT (GOOGLE MAPS) ---
+        // Context Menu
         let currentContextMenuCoords = null;
         const contextMenu = document.getElementById('context-menu');
-
-        map.on('contextmenu', function(e) {
+        map.on('contextmenu', (e) => {
             currentContextMenuCoords = e.latlng;
             contextMenu.style.display = 'block';
             contextMenu.style.left = e.containerPoint.x + 'px';
             contextMenu.style.top = e.containerPoint.y + 'px';
         });
-
-        // Cacher le menu sur clic ailleurs ou changement de zoom
-        map.on('mousedown dragstart zoomstart', hideContextMenu);
-        document.addEventListener('click', hideContextMenu);
-
-        function hideContextMenu() {
-            contextMenu.style.display = 'none';
-        }
-
+        document.addEventListener('click', () => contextMenu.style.display = 'none');
         function openGoogleMaps() {
             if (currentContextMenuCoords) {
-                const url = `https://www.google.com/maps/search/?api=1&query=${currentContextMenuCoords.lat},${currentContextMenuCoords.lng}`;
-                window.open(url, '_blank');
+                window.open(`https://www.google.com/maps/search/?api=1&query=${currentContextMenuCoords.lat},${currentContextMenuCoords.lng}`, '_blank');
             }
-            hideContextMenu();
         }
 
         const layers = {};
 
         const layerConfigs = [
-            {
-                id: 'traverse',
-                url: 'traverse.geojson',
-                name: 'Traversée non indiquée',
-                category: 'signalisation',
-                color: '#e74c3c',
-                weight: 5
-            },
-            {
-                id: 'giration',
-                url: 'giration.geojson',
-                name: 'Angle de giration serré',
-                category: 'amenagement',
-                color: '#9b59b6',
-                weight: 4
-            },
-            {
-                id: 'cone',
-                url: 'cone.geojson',
-                name: 'Cône de visibilité',
-                category: 'amenagement',
-                color: '#f1c40f',
-                weight: 2,
-                fillOpacity: 0.4
-            },
-            {
-                id: 'terreplein',
-                url: 'terreplein.geojson',
-                name: 'Terre-plein',
-                category: 'amenagement',
-                color: '#e67e22',
-                weight: 3
-            },
-            {
-                id: 'bandes',
-                url: 'bandes.geojson',
-                name: 'Bandes cyclables étroites',
-                category: 'signalisation',
-                color: '#3498db',
-                weight: 4
-            },
-            {
-                id: 'marquages',
-                url: 'marquages.geojson',
-                name: 'Marquage effacé',
-                category: 'signalisation',
-                color: '#95a5a6',
-                weight: 4,
-                dashArray: '5, 5'
-            },
-            {
-                id: 'revetement',
-                url: 'revetement.geojson',
-                name: 'Revêtement défectueux',
-                category: 'amenagement',
-                color: '#7f8c8d',
-                weight: 5,
-                fillOpacity: 0.5
-            },
-            {
-                id: 'vegetation',
-                url: 'vegetation.geojson',
-                name: 'Densité de végétation',
-                category: 'comportement',
-                isHeatmap: true,
-                color: 'linear-gradient(to right, blue, green, yellow, red)'
-            },
-            {
-                id: 'metropole',
-                url: 'proprietemetropole.geojson',
-                name: 'Propriété Métropole',
-                category: 'contexte',
-                color: '#8e44ad',
-                weight: 3,
-                fill: false,
-                hiddenByDefault: true 
-            },
-            {
-                id: 'reseauxstructurant',
-                url: 'reseauxstructurant.geojson',
-                name: 'Réseau Structurant',
-                category: 'contexte',
-                color: '#16a085',
-                weight: 3,
-                fill: false,
-                hiddenByDefault: true
-            }
+            { id: 'traverse', url: 'traverse.geojson', name: 'Traversée non indiquée', category: 'signalisation', color: '#e74c3c', weight: 5 },
+            { id: 'giration', url: 'giration.geojson', name: 'Angle de giration serré', category: 'amenagement', color: '#9b59b6', weight: 4 },
+            { id: 'cone', url: 'cone.geojson', name: 'Cône de visibilité', category: 'amenagement', color: '#f1c40f', weight: 2, fillOpacity: 0.4 },
+            { id: 'terreplein', url: 'terreplein.geojson', name: 'Terre-plein', category: 'amenagement', color: '#e67e22', weight: 3 },
+            { id: 'bandes', url: 'bandes.geojson', name: 'Bandes cyclables étroites', category: 'signalisation', color: '#3498db', weight: 4 },
+            { id: 'marquages', url: 'marquages.geojson', name: 'Marquage effacé', category: 'signalisation', color: '#95a5a6', weight: 4, dashArray: '5, 5' },
+            { id: 'revetement', url: 'revetement.geojson', name: 'Revêtement défectueux', category: 'amenagement', color: '#7f8c8d', weight: 5, fillOpacity: 0.5 },
+            { id: 'vegetation', url: 'vegetation.geojson', name: 'Densité de végétation', category: 'comportement', isHeatmap: true, color: 'linear-gradient(to right, blue, green, yellow, red)' },
+            { id: 'metropole', url: 'proprietemetropole.geojson', name: 'Propriété Métropole', category: 'contexte', color: '#d35400', weight: 4, fillOpacity: 0.1, hiddenByDefault: true },
+            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#27ae60', weight: 4, fill: false, hiddenByDefault: true }
         ];
 
         function onEachFeature(feature, layer) {
             let content = '<div class="popup-content">';
-            const props = feature.properties;
-            const description = props.description || props.Notes || 'Point de diagnostic';
-            const photoSrc = props.photo || props.Photo;
-            
+            const description = feature.properties.description || feature.properties.Notes || 'Information';
             content += `<b>${description}</b>`;
-            
-            if (props.Date) {
-                content += `<small>Date : ${props.Date}</small><br>`;
+            if (feature.properties.photo || feature.properties.Photo) {
+                content += `<img src="${feature.properties.photo || feature.properties.Photo}" class="popup-photo" alt="Photo" onerror="this.style.display='none'">`;
             }
-            
-            if (photoSrc) {
-                content += `<img src="${photoSrc}" class="popup-photo" alt="Photo du diagnostic" onerror="this.style.display='none'">`;
-            }
-            
             content += '</div>';
             layer.bindPopup(content);
-            layer.bindTooltip("Détails du diagnostic", { sticky: true });
-        }
-
-        function calculateHeatRadius(zoom) {
-            return 20 * Math.pow(0.85, 15 - zoom);
         }
 
         async function loadGeoLayer(config) {
             try {
                 const response = await fetch(config.url);
-                if (!response.ok) throw new Error('Fichier introuvable');
+                if (!response.ok) return;
                 const data = await response.json();
 
+                // Détection auto du besoin de reprojection (si CRS 3945 ou coordonnées > 1000)
+                let needsReprojection = (data.crs && JSON.stringify(data.crs).includes('3945'));
+                
                 let layer;
-
                 if (config.isHeatmap) {
-                    const heatPoints = data.features.map(f => {
-                        return [
-                            f.geometry.coordinates[1],
-                            f.geometry.coordinates[0],
-                            parseFloat(f.properties.intensity) || 0.5
-                        ];
-                    });
-
-                    const initialRadius = calculateHeatRadius(map.getZoom());
-                    
-                    const heatLayer = L.heatLayer(heatPoints, {
-                        radius: initialRadius,
-                        blur: 15,
-                        max: 0.2, 
-                        gradient: {
-                            0.2: 'blue', 
-                            0.4: 'cyan', 
-                            0.6: 'lime', 
-                            0.8: 'yellow', 
-                            1.0: 'red'
-                        }
-                    });
-
-                    const interactionLayer = L.geoJSON(data, {
-                        pointToLayer: function(feature, latlng) {
-                            return L.circleMarker(latlng, {
-                                radius: 20,
-                                fillColor: "transparent",
-                                color: "transparent",
-                                stroke: false
-                            });
-                        },
-                        onEachFeature: onEachFeature
-                    });
-
-                    layer = L.featureGroup([heatLayer, interactionLayer]);
+                    const heatPoints = data.features.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0], 0.5]);
+                    layer = L.heatLayer(heatPoints, { radius: 20, blur: 15, max: 0.2 });
                 } else {
                     layer = L.geoJSON(data, {
-                        style: function(feature) {
-                            return {
-                                color: config.color,
-                                weight: config.weight,
-                                opacity: 1, 
-                                fillColor: config.color,
-                                fillOpacity: config.fill === false ? 0 : (config.fillOpacity || 0.2),
-                                dashArray: config.dashArray || null
-                            };
+                        coordsToLatLng: function (coords) {
+                            if (needsReprojection || coords[0] > 1000) {
+                                // Conversion CC45 vers WGS84
+                                var pt = proj4("EPSG:3945", "EPSG:4326", [coords[0], coords[1]]);
+                                return new L.LatLng(pt[1], pt[0]);
+                            }
+                            return new L.LatLng(coords[1], coords[0]);
                         },
-                        pointToLayer: function(feature, latlng) {
-                            return L.circleMarker(latlng, {
-                                radius: 8,
-                                fillColor: config.color,
-                                color: "#fff",
-                                weight: 2,
-                                opacity: 1,
-                                fillOpacity: 0.8
-                            });
-                        },
+                        style: () => ({
+                            color: config.color,
+                            weight: config.weight,
+                            opacity: 1,
+                            fillColor: config.color,
+                            fillOpacity: config.fill === false ? 0 : (config.fillOpacity || 0.2),
+                            dashArray: config.dashArray || null
+                        }),
+                        pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 8, fillColor: config.color, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8 }),
                         onEachFeature: onEachFeature
                     });
                 }
 
                 layers[config.id] = layer;
-                
-                if (!config.hiddenByDefault) {
-                    layer.addTo(map);
-                }
-                
+                if (!config.hiddenByDefault) layer.addTo(map);
                 addLayerToUI(config);
-
-            } catch (error) {
-                console.error(`Erreur chargement ${config.url}:`, error);
-            }
+            } catch (e) { console.warn(e); }
         }
 
         function addLayerToUI(config) {
             const container = document.getElementById(`cat-${config.category}`);
             if (!container) return;
-
             const div = document.createElement('div');
             div.className = 'layer-item';
-            const chkId = `chk-${config.id}`;
-            const isChecked = !config.hiddenByDefault ? 'checked' : '';
-            
-            const symbolStyle = config.isHeatmap 
-                ? `background: ${config.color};` 
-                : (config.fill === false 
-                    ? `border: 2px solid ${config.color}; background: transparent;` 
-                    : `background-color: ${config.color}; border-bottom: ${config.dashArray ? '2px dashed #333' : '1px solid rgba(0,0,0,0.2)'}`);
-
-            div.innerHTML = `
-                <input type="checkbox" id="${chkId}" ${isChecked}>
-                <label for="${chkId}">
-                    <span class="symbol ${config.isHeatmap ? 'symbol-heatmap' : ''}" style="${!config.isHeatmap ? symbolStyle : ''}"></span>
-                    ${config.name}
-                </label>
-            `;
-
+            div.innerHTML = `<input type="checkbox" id="chk-${config.id}" ${!config.hiddenByDefault ? 'checked' : ''}><label for="chk-${config.id}"><span class="symbol" style="background:${config.color}"></span>${config.name}</label>`;
             div.querySelector('input').addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    if (layers[config.id]) map.addLayer(layers[config.id]);
-                } else {
-                    if (layers[config.id]) map.removeLayer(layers[config.id]);
-                }
+                if (e.target.checked) map.addLayer(layers[config.id]);
+                else map.removeLayer(layers[config.id]);
             });
-
             container.appendChild(div);
         }
 
-        map.on('zoomend', function() {
-            const currentZoom = map.getZoom();
-            const newRadius = calculateHeatRadius(currentZoom);
-            
-            layerConfigs.forEach(config => {
-                if (config.isHeatmap && layers[config.id]) {
-                    layers[config.id].eachLayer(layer => {
-                        if (layer.setOptions) {
-                            layer.setOptions({ radius: newRadius });
-                        }
-                    });
-                }
-            });
-        });
-
-        window.onload = () => {
-            layerConfigs.forEach(config => loadGeoLayer(config));
-        };
-
+        window.onload = () => layerConfigs.forEach(loadGeoLayer);
     </script>
 </body>
 </html>
