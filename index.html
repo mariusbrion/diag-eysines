@@ -249,7 +249,8 @@
         // Définition de la projection CC45 (EPSG:3945)
         proj4.defs("EPSG:3945","+proj=lcc +lat_1=44.25 +lat_2=45.75 +lat_0=45 +lon_0=3 +x_0=1700000 +y_0=4200000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
-        const map = L.map('map').setView([44.87826446160561, -0.6565541041113465], 14);
+        // Initialisation de la carte avec un zoom d'un cran supplémentaire (15 au lieu de 14)
+        const map = L.map('map').setView([44.87826446160561, -0.6565541041113465], 14.5);
 
         // --- GESTION DE L'ORDRE DES COUCHES ---
         map.createPane('contextPane');
@@ -310,14 +311,16 @@
             { id: 'marquages', url: 'marquages.geojson', name: 'Marquage effacé', category: 'signalisation', color: '#95a5a6', weight: 4, dashArray: '5, 5', pane: 'diagnosticPane' },
             { id: 'revetement', url: 'revetement.geojson', name: 'Revêtement défectueux', category: 'amenagement', color: '#7f8c8d', weight: 5, fillOpacity: 0.5, pane: 'diagnosticPane' },
             
+            // COUCHE EAU DÉPLACÉE ICI
+            { id: 'eau', url: 'eau.geojson', name: 'Zones d\'eau', category: 'amenagement', color: '#3498db', weight: 1, fillOpacity: 0.5, hiddenByDefault: true, pane: 'diagnosticPane' },
+            
             // VEGETATION
             { id: 'vegetationsol', url: 'vegetationsol.geojson', name: 'Végétation au sol', category: 'comportement', color: '#27ae60', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
             { id: 'vegetationdebord', url: 'vegetationdebord.geojson', name: 'Végétation débordante', category: 'comportement', color: '#16a085', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
 
             // CONTEXTE
             { id: 'metropole', url: 'proprietemetropole.geojson', name: 'Propriété Métropole', category: 'contexte', color: '#d35400', weight: 3, fillOpacity: 0.1, hiddenByDefault: true, pane: 'contextPane' },
-            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#16a085', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' },
-            { id: 'eau', url: 'eau.geojson', name: 'Zones d\'eau', category: 'contexte', color: '#3498db', weight: 1, fillOpacity: 0.5, hiddenByDefault: true, pane: 'contextPane' }
+            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#16a085', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' }
         ];
 
         function onEachFeature(feature, layer, configId) {
