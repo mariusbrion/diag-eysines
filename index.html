@@ -160,12 +160,20 @@
             background: var(--bg-light);
         }
 
+        /* Agrandissement des photos des popups */
         .popup-photo {
             width: 100%;
-            max-width: 250px;
+            max-width: 750px; /* 3 fois plus grand que 250px */
+            height: auto;
             border-radius: 4px;
             margin-top: 8px;
             display: block;
+        }
+
+        /* Ajustement de la largeur des popups Leaflet pour accommoder les grandes photos */
+        .leaflet-popup-content {
+            width: auto !important;
+            max-width: 800px !important;
         }
 
         .popup-content b {
@@ -178,6 +186,9 @@
             #custom-legend {
                 width: 220px;
                 font-size: 0.9rem;
+            }
+            .popup-photo {
+                max-width: 100%; /* S'adapte sur mobile */
             }
         }
     </style>
@@ -232,11 +243,9 @@
         const map = L.map('map').setView([44.87826446160561, -0.6565541041113465], 14);
 
         // --- GESTION DE L'ORDRE DES COUCHES ---
-        // Pane pour le contexte (fond)
         map.createPane('contextPane');
         map.getPane('contextPane').style.zIndex = 350;
         
-        // Pane pour le diagnostic (dessus)
         map.createPane('diagnosticPane');
         map.getPane('diagnosticPane').style.zIndex = 450;
 
@@ -292,19 +301,18 @@
             { id: 'marquages', url: 'marquages.geojson', name: 'Marquage effacé', category: 'signalisation', color: '#95a5a6', weight: 4, dashArray: '5, 5', pane: 'diagnosticPane' },
             { id: 'revetement', url: 'revetement.geojson', name: 'Revêtement défectueux', category: 'amenagement', color: '#7f8c8d', weight: 5, fillOpacity: 0.5, pane: 'diagnosticPane' },
             
-            // NOUVELLES COUCHES VEGETATION (POLYGONE)
+            // VEGETATION
             { id: 'vegetationsol', url: 'vegetationsol.geojson', name: 'Végétation au sol', category: 'comportement', color: '#27ae60', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
             { id: 'vegetationdebord', url: 'vegetationdebord.geojson', name: 'Végétation débordante', category: 'comportement', color: '#16a085', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
 
-            // CONTEXTE (EN DESSOUS)
+            // CONTEXTE
             { id: 'metropole', url: 'proprietemetropole.geojson', name: 'Propriété Métropole', category: 'contexte', color: '#d35400', weight: 3, fillOpacity: 0.1, hiddenByDefault: true, pane: 'contextPane' },
-            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#2c3e50', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' }
+            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#16a085', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' }
         ];
 
         function onEachFeature(feature, layer, configId) {
             let content = '<div class="popup-content">';
             
-            // Gestion spécifique pour la couche métropole (SOUS_THEME)
             if (configId === 'metropole' && feature.properties.SOUS_THEME) {
                 content += `<b>${feature.properties.SOUS_THEME}</b>`;
                 if (feature.properties.id) content += `<br><small>ID: ${feature.properties.id}</small>`;
@@ -336,15 +344,26 @@
                         }
                         return new L.LatLng(coords[1], coords[0]);
                     },
-                    style: () => ({
-                        color: config.color,
-                        weight: config.weight,
-                        opacity: 1,
-                        fillColor: config.color,
-                        fillOpacity: config.fill === false ? 0 : (config.fillOpacity || 0.2),
-                        dashArray: config.dashArray || null,
-                        pane: config.pane || 'overlayPane'
-                    }),
+                    style: (feature) => {
+                        let styleObj = {
+                            color: config.color,
+                            weight: config.weight,
+                            opacity: 1,
+                            fillColor: config.color,
+                            fillOpacity: config.fill === false ? 0 : (config.fillOpacity || 0.2),
+                            dashArray: config.dashArray || null,
+                            pane: config.pane || 'overlayPane'
+                        };
+
+                        // Condition spéciale pour "COMMUNES" dans la couche métropole
+                        if (config.id === 'metropole' && feature.properties && feature.properties.SOUS_THEME === "COMMUNES") {
+                            styleObj.fillColor = '#3498db'; // Bleu pour les communes
+                            styleObj.fillOpacity = 0.4;
+                            styleObj.color = '#2980b9';
+                        }
+
+                        return styleObj;
+                    },
                     pointToLayer: (f, latlng) => L.circleMarker(latlng, { 
                         radius: 8, 
                         fillColor: config.color, 
