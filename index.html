@@ -317,10 +317,20 @@
                 url: 'proprietemetropole.geojson',
                 name: 'Propriété Métropole',
                 category: 'contexte',
-                color: '#2c3e50',
-                weight: 2,
-                fill: false, // Pas de remplissage
-                hiddenByDefault: true // Caché de base
+                color: '#8e44ad', // Couleur plus distincte (violet)
+                weight: 3,
+                fill: false,
+                hiddenByDefault: true 
+            },
+            {
+                id: 'reseauxstructurant',
+                url: 'reseauxstructurant.geojson',
+                name: 'Réseau Structurant',
+                category: 'contexte',
+                color: '#16a085', // Vert d'eau
+                weight: 3,
+                fill: false,
+                hiddenByDefault: true
             }
         ];
 
@@ -401,7 +411,7 @@
                             return {
                                 color: config.color,
                                 weight: config.weight,
-                                opacity: 0.8,
+                                opacity: 1, // Opacité de la ligne renforcée
                                 fillColor: config.color,
                                 fillOpacity: config.fill === false ? 0 : (config.fillOpacity || 0.2),
                                 dashArray: config.dashArray || null
@@ -423,7 +433,6 @@
 
                 layers[config.id] = layer;
                 
-                // On n'ajoute à la carte que si ce n'est pas "hiddenByDefault"
                 if (!config.hiddenByDefault) {
                     layer.addTo(map);
                 }
@@ -460,9 +469,9 @@
 
             div.querySelector('input').addEventListener('change', (e) => {
                 if (e.target.checked) {
-                    map.addLayer(layers[config.id]);
+                    if (layers[config.id]) map.addLayer(layers[config.id]);
                 } else {
-                    map.removeLayer(layers[config.id]);
+                    if (layers[config.id]) map.removeLayer(layers[config.id]);
                 }
             });
 
