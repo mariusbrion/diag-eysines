@@ -112,6 +112,7 @@
             background: linear-gradient(to right, blue, green, yellow, red);
         }
 
+        /* Bouton de changement de fond personnalisé */
         .basemap-toggle {
             position: absolute;
             bottom: 20px;
@@ -174,23 +175,31 @@
         </div>
         
         <div id="category-list">
+            <!-- Section Diagnostics -->
             <div class="category-block">
-                <span class="category-title">Aménagement</span>
+                <span class="category-title">Aménagement défaillant</span>
                 <div id="cat-amenagement"></div>
             </div>
 
             <div class="category-block">
-                <span class="category-title">Signalisation</span>
+                <span class="category-title">Signalisation défaillante</span>
                 <div id="cat-signalisation"></div>
             </div>
 
             <div class="category-block">
-                <span class="category-title">Comportement</span>
+                <span class="category-title">Risques & Comportements</span>
                 <div id="cat-comportement"></div>
+            </div>
+
+            <!-- Section Hors catégorie / Contexte -->
+            <div class="category-block" style="border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px;">
+                <span class="category-title">Données de contexte</span>
+                <div id="cat-contexte"></div>
             </div>
         </div>
     </div>
 
+    <!-- Bouton de changement de fond -->
     <button class="basemap-toggle" onclick="toggleBasemap()">
         <div class="basemap-toggle-icon" id="toggle-preview"></div>
         <span id="toggle-text">Passer en Satellite</span>
@@ -216,6 +225,7 @@
 
         voyagerLayer.addTo(map);
 
+        // Logique de bascule du fond de carte
         let isSatellite = false;
         function toggleBasemap() {
             if (isSatellite) {
@@ -301,6 +311,16 @@
                 category: 'comportement',
                 isHeatmap: true,
                 color: 'linear-gradient(to right, blue, green, yellow, red)'
+            },
+            {
+                id: 'metropole',
+                url: 'proprietemetropole.geojson',
+                name: 'Propriété Métropole',
+                category: 'contexte',
+                color: '#2c3e50',
+                weight: 2,
+                fill: false, // Pas de remplissage
+                hiddenByDefault: true // Caché de base
             }
         ];
 
@@ -325,9 +345,8 @@
             layer.bindTooltip("Détails du diagnostic", { sticky: true });
         }
 
-        // --- CALCUL DU RAYON MIS À JOUR ---
+        // Calcul du rayon selon la formule demandée
         function calculateHeatRadius(zoom) {
-            // Rayon de 30px pour un zoom de 15
             return 20 * Math.pow(0.85, 15 - zoom);
         }
 
@@ -353,7 +372,7 @@
                     const heatLayer = L.heatLayer(heatPoints, {
                         radius: initialRadius,
                         blur: 15,
-                        max: 0.2, // Plus sensible (0.2 au lieu de 0.5) pour marquer davantage les points
+                        max: 0.2, 
                         gradient: {
                             0.2: 'blue', 
                             0.4: 'cyan', 
@@ -384,7 +403,7 @@
                                 weight: config.weight,
                                 opacity: 0.8,
                                 fillColor: config.color,
-                                fillOpacity: config.fillOpacity || 0.2,
+                                fillOpacity: config.fill === false ? 0 : (config.fillOpacity || 0.2),
                                 dashArray: config.dashArray || null
                             };
                         },
@@ -403,7 +422,12 @@
                 }
 
                 layers[config.id] = layer;
-                layer.addTo(map);
+                
+                // On n'ajoute à la carte que si ce n'est pas "hiddenByDefault"
+                if (!config.hiddenByDefault) {
+                    layer.addTo(map);
+                }
+                
                 addLayerToUI(config);
 
             } catch (error) {
@@ -418,13 +442,16 @@
             const div = document.createElement('div');
             div.className = 'layer-item';
             const chkId = `chk-${config.id}`;
+            const isChecked = !config.hiddenByDefault ? 'checked' : '';
             
             const symbolStyle = config.isHeatmap 
                 ? `background: ${config.color};` 
-                : `background-color: ${config.color}; border-bottom: ${config.dashArray ? '2px dashed #333' : '1px solid rgba(0,0,0,0.2)'}`;
+                : (config.fill === false 
+                    ? `border: 2px solid ${config.color}; background: transparent;` 
+                    : `background-color: ${config.color}; border-bottom: ${config.dashArray ? '2px dashed #333' : '1px solid rgba(0,0,0,0.2)'}`);
 
             div.innerHTML = `
-                <input type="checkbox" id="${chkId}" checked>
+                <input type="checkbox" id="${chkId}" ${isChecked}>
                 <label for="${chkId}">
                     <span class="symbol ${config.isHeatmap ? 'symbol-heatmap' : ''}" style="${!config.isHeatmap ? symbolStyle : ''}"></span>
                     ${config.name}
