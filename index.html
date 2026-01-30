@@ -160,41 +160,44 @@
             background: var(--bg-light);
         }
 
-        /* Agrandissement des photos des popups */
+        /* Photos des popups forcées en grand format */
         .popup-photo {
-            width: 100%;
-            max-width: 750px; 
+            width: 600px !important; 
+            max-width: 100% !important;
             height: auto;
             border-radius: 4px;
-            margin-top: 8px;
+            margin-top: 10px;
             display: block;
         }
 
-        /* Ajustement de la largeur des popups Leaflet pour accommoder les grandes photos */
+        /* Ajustement du conteneur Leaflet pour accepter la largeur */
         .leaflet-popup-content-wrapper {
-            border-radius: 8px;
+            border-radius: 12px;
+            padding: 5px;
         }
 
         .leaflet-popup-content {
-            width: auto !important;
-            max-width: 800px !important;
-            margin: 13px 19px;
+            width: 620px !important; /* Force la largeur du cadre */
+            margin: 15px !important;
         }
 
         .popup-content b {
             color: var(--primary-color);
             display: block;
-            margin-bottom: 5px;
-            font-size: 1rem;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 700px) {
             #custom-legend {
                 width: 220px;
                 font-size: 0.9rem;
             }
+            .leaflet-popup-content {
+                width: 280px !important;
+            }
             .popup-photo {
-                max-width: 100%; 
+                width: 100% !important;
             }
         }
     </style>
@@ -313,7 +316,8 @@
 
             // CONTEXTE
             { id: 'metropole', url: 'proprietemetropole.geojson', name: 'Propriété Métropole', category: 'contexte', color: '#d35400', weight: 3, fillOpacity: 0.1, hiddenByDefault: true, pane: 'contextPane' },
-            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#16a085', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' }
+            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#16a085', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' },
+            { id: 'eau', url: 'eau.geojson', name: 'Zones d\'eau', category: 'contexte', color: '#3498db', weight: 1, fillOpacity: 0.5, hiddenByDefault: true, pane: 'contextPane' }
         ];
 
         function onEachFeature(feature, layer, configId) {
@@ -332,8 +336,12 @@
             }
             content += '</div>';
             
-            // Ajout de maxWidth pour permettre aux grandes images de s'afficher correctement
-            layer.bindPopup(content, { maxWidth: 800 });
+            // Fix définitif pour la largeur : minWidth et maxWidth identiques
+            layer.bindPopup(content, { 
+                maxWidth: 620, 
+                minWidth: 620,
+                className: 'custom-popup'
+            });
         }
 
         async function loadGeoLayer(config) {
@@ -363,16 +371,14 @@
                             pane: config.pane || 'overlayPane'
                         };
 
-                        // Condition spéciale pour "COMMUNES" dans la couche métropole
                         if (config.id === 'metropole' && feature.properties && feature.properties.SOUS_THEME === "COMMUNES") {
-                            styleObj.fillColor = '#3498db'; // Bleu clair
+                            styleObj.fillColor = '#3498db'; 
                             styleObj.fillOpacity = 0.4;
                             styleObj.color = '#2980b9';
                         }
                         
-                        // Condition spéciale pour "METROPOLE" dans la couche métropole
                         if (config.id === 'metropole' && feature.properties && feature.properties.SOUS_THEME === "METROPOLE") {
-                            styleObj.fillColor = '#1a5276'; // Bleu foncé
+                            styleObj.fillColor = '#1a5276'; 
                             styleObj.fillOpacity = 0.5;
                             styleObj.color = '#154360';
                         }
