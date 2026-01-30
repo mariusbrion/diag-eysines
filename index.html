@@ -7,8 +7,6 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Leaflet Heatmap Plugin -->
-    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <!-- Proj4js pour la gestion des projections (EPSG:3945) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
     <style>
@@ -108,10 +106,6 @@
             display: inline-block;
             border: 1px solid rgba(0,0,0,0.2);
             flex-shrink: 0;
-        }
-
-        .symbol-heatmap {
-            background: linear-gradient(to right, blue, green, yellow, red);
         }
 
         /* Bouton de changement de fond personnalisé */
@@ -232,10 +226,19 @@
     <div id="map"></div>
 
     <script>
-        // Définition de la projection CC45 (EPSG:3945) pour Bordeaux/Eysines
+        // Définition de la projection CC45 (EPSG:3945)
         proj4.defs("EPSG:3945","+proj=lcc +lat_1=44.25 +lat_2=45.75 +lat_0=45 +lon_0=3 +x_0=1700000 +y_0=4200000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
         const map = L.map('map').setView([44.87826446160561, -0.6565541041113465], 14);
+
+        // --- GESTION DE L'ORDRE DES COUCHES ---
+        // Pane pour le contexte (fond)
+        map.createPane('contextPane');
+        map.getPane('contextPane').style.zIndex = 350;
+        
+        // Pane pour le diagnostic (dessus)
+        map.createPane('diagnosticPane');
+        map.getPane('diagnosticPane').style.zIndex = 450;
 
         const voyagerLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
@@ -280,24 +283,38 @@
         const layers = {};
 
         const layerConfigs = [
-            { id: 'traverse', url: 'traverse.geojson', name: 'Traversée non indiquée', category: 'signalisation', color: '#e74c3c', weight: 5 },
-            { id: 'giration', url: 'giration.geojson', name: 'Angle de giration serré', category: 'amenagement', color: '#9b59b6', weight: 4 },
-            { id: 'cone', url: 'cone.geojson', name: 'Cône de visibilité', category: 'amenagement', color: '#f1c40f', weight: 2, fillOpacity: 0.4 },
-            { id: 'terreplein', url: 'terreplein.geojson', name: 'Terre-plein', category: 'amenagement', color: '#e67e22', weight: 3 },
-            { id: 'bandes', url: 'bandes.geojson', name: 'Bandes cyclables étroites', category: 'signalisation', color: '#3498db', weight: 4 },
-            { id: 'marquages', url: 'marquages.geojson', name: 'Marquage effacé', category: 'signalisation', color: '#95a5a6', weight: 4, dashArray: '5, 5' },
-            { id: 'revetement', url: 'revetement.geojson', name: 'Revêtement défectueux', category: 'amenagement', color: '#7f8c8d', weight: 5, fillOpacity: 0.5 },
-            { id: 'vegetation', url: 'vegetation.geojson', name: 'Densité de végétation', category: 'comportement', isHeatmap: true, color: 'linear-gradient(to right, blue, green, yellow, red)' },
-            { id: 'metropole', url: 'proprietemetropole.geojson', name: 'Propriété Métropole', category: 'contexte', color: '#d35400', weight: 4, fillOpacity: 0.1, hiddenByDefault: true },
-            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#27ae60', weight: 4, fill: false, hiddenByDefault: true }
+            // DIAGNOSTICS
+            { id: 'traverse', url: 'traverse.geojson', name: 'Traversée non indiquée', category: 'signalisation', color: '#e74c3c', weight: 5, pane: 'diagnosticPane' },
+            { id: 'giration', url: 'giration.geojson', name: 'Angle de giration serré', category: 'amenagement', color: '#9b59b6', weight: 4, pane: 'diagnosticPane' },
+            { id: 'cone', url: 'cone.geojson', name: 'Cône de visibilité', category: 'amenagement', color: '#f1c40f', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
+            { id: 'terreplein', url: 'terreplein.geojson', name: 'Terre-plein', category: 'amenagement', color: '#e67e22', weight: 3, pane: 'diagnosticPane' },
+            { id: 'bandes', url: 'bandes.geojson', name: 'Bandes cyclables étroites', category: 'signalisation', color: '#3498db', weight: 4, pane: 'diagnosticPane' },
+            { id: 'marquages', url: 'marquages.geojson', name: 'Marquage effacé', category: 'signalisation', color: '#95a5a6', weight: 4, dashArray: '5, 5', pane: 'diagnosticPane' },
+            { id: 'revetement', url: 'revetement.geojson', name: 'Revêtement défectueux', category: 'amenagement', color: '#7f8c8d', weight: 5, fillOpacity: 0.5, pane: 'diagnosticPane' },
+            
+            // NOUVELLES COUCHES VEGETATION (POLYGONE)
+            { id: 'vegetationsol', url: 'vegetationsol.geojson', name: 'Végétation au sol', category: 'comportement', color: '#27ae60', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
+            { id: 'vegetationdebord', url: 'vegetationdebord.geojson', name: 'Végétation débordante', category: 'comportement', color: '#16a085', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
+
+            // CONTEXTE (EN DESSOUS)
+            { id: 'metropole', url: 'proprietemetropole.geojson', name: 'Propriété Métropole', category: 'contexte', color: '#d35400', weight: 3, fillOpacity: 0.1, hiddenByDefault: true, pane: 'contextPane' },
+            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#2c3e50', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' }
         ];
 
-        function onEachFeature(feature, layer) {
+        function onEachFeature(feature, layer, configId) {
             let content = '<div class="popup-content">';
-            const description = feature.properties.description || feature.properties.Notes || 'Information';
-            content += `<b>${description}</b>`;
+            
+            // Gestion spécifique pour la couche métropole (SOUS_THEME)
+            if (configId === 'metropole' && feature.properties.SOUS_THEME) {
+                content += `<b>${feature.properties.SOUS_THEME}</b>`;
+                if (feature.properties.id) content += `<br><small>ID: ${feature.properties.id}</small>`;
+            } else {
+                const description = feature.properties.description || feature.properties.Notes || 'Information';
+                content += `<b>${description}</b>`;
+            }
+            
             if (feature.properties.photo || feature.properties.Photo) {
-                content += `<img src="${feature.properties.photo || feature.properties.Photo}" class="popup-photo" alt="Photo" onerror="this.style.display='none'">`;
+                content += `<br><img src="${feature.properties.photo || feature.properties.Photo}" class="popup-photo" alt="Photo" onerror="this.style.display='none'">`;
             }
             content += '</div>';
             layer.bindPopup(content);
@@ -309,40 +326,41 @@
                 if (!response.ok) return;
                 const data = await response.json();
 
-                // Détection auto du besoin de reprojection (si CRS 3945 ou coordonnées > 1000)
                 let needsReprojection = (data.crs && JSON.stringify(data.crs).includes('3945'));
                 
-                let layer;
-                if (config.isHeatmap) {
-                    const heatPoints = data.features.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0], 0.5]);
-                    layer = L.heatLayer(heatPoints, { radius: 20, blur: 15, max: 0.2 });
-                } else {
-                    layer = L.geoJSON(data, {
-                        coordsToLatLng: function (coords) {
-                            if (needsReprojection || coords[0] > 1000) {
-                                // Conversion CC45 vers WGS84
-                                var pt = proj4("EPSG:3945", "EPSG:4326", [coords[0], coords[1]]);
-                                return new L.LatLng(pt[1], pt[0]);
-                            }
-                            return new L.LatLng(coords[1], coords[0]);
-                        },
-                        style: () => ({
-                            color: config.color,
-                            weight: config.weight,
-                            opacity: 1,
-                            fillColor: config.color,
-                            fillOpacity: config.fill === false ? 0 : (config.fillOpacity || 0.2),
-                            dashArray: config.dashArray || null
-                        }),
-                        pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 8, fillColor: config.color, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8 }),
-                        onEachFeature: onEachFeature
-                    });
-                }
+                const layer = L.geoJSON(data, {
+                    coordsToLatLng: function (coords) {
+                        if (needsReprojection || coords[0] > 1000) {
+                            var pt = proj4("EPSG:3945", "EPSG:4326", [coords[0], coords[1]]);
+                            return new L.LatLng(pt[1], pt[0]);
+                        }
+                        return new L.LatLng(coords[1], coords[0]);
+                    },
+                    style: () => ({
+                        color: config.color,
+                        weight: config.weight,
+                        opacity: 1,
+                        fillColor: config.color,
+                        fillOpacity: config.fill === false ? 0 : (config.fillOpacity || 0.2),
+                        dashArray: config.dashArray || null,
+                        pane: config.pane || 'overlayPane'
+                    }),
+                    pointToLayer: (f, latlng) => L.circleMarker(latlng, { 
+                        radius: 8, 
+                        fillColor: config.color, 
+                        color: "#fff", 
+                        weight: 2, 
+                        opacity: 1, 
+                        fillOpacity: 0.8,
+                        pane: config.pane || 'overlayPane'
+                    }),
+                    onEachFeature: (f, l) => onEachFeature(f, l, config.id)
+                });
 
                 layers[config.id] = layer;
                 if (!config.hiddenByDefault) layer.addTo(map);
                 addLayerToUI(config);
-            } catch (e) { console.warn(e); }
+            } catch (e) { console.warn("Erreur chargement " + config.url, e); }
         }
 
         function addLayerToUI(config) {
