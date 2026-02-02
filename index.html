@@ -249,8 +249,8 @@
         // Définition de la projection CC45 (EPSG:3945)
         proj4.defs("EPSG:3945","+proj=lcc +lat_1=44.25 +lat_2=45.75 +lat_0=45 +lon_0=3 +x_0=1700000 +y_0=4200000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
-        // Initialisation de la carte avec un zoom d'un cran supplémentaire (15 au lieu de 14)
-        const map = L.map('map').setView([44.87826446160561, -0.6565541041113465], 14.5);
+        // Initialisation de la carte avec un zoom d'un cran supplémentaire (15)
+        const map = L.map('map').setView([44.87826446160561, -0.6565541041113465], 15);
 
         // --- GESTION DE L'ORDRE DES COUCHES ---
         map.createPane('contextPane');
@@ -302,19 +302,21 @@
         const layers = {};
 
         const layerConfigs = [
-            // DIAGNOSTICS
-            { id: 'traverse', url: 'traverse.geojson', name: 'Traversée non indiquée', category: 'signalisation', color: '#e74c3c', weight: 5, pane: 'diagnosticPane' },
+            // DIAGNOSTICS - AMÉNAGEMENT
             { id: 'giration', url: 'giration.geojson', name: 'Angle de giration serré', category: 'amenagement', color: '#9b59b6', weight: 4, pane: 'diagnosticPane' },
             { id: 'cone', url: 'cone.geojson', name: 'Cône de visibilité', category: 'amenagement', color: '#f1c40f', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
             { id: 'terreplein', url: 'terreplein.geojson', name: 'Terre-plein', category: 'amenagement', color: '#e67e22', weight: 3, pane: 'diagnosticPane' },
-            { id: 'bandes', url: 'bandes.geojson', name: 'Bandes cyclables étroites', category: 'signalisation', color: '#3498db', weight: 4, pane: 'diagnosticPane' },
-            { id: 'marquages', url: 'marquages.geojson', name: 'Marquage effacé', category: 'signalisation', color: '#95a5a6', weight: 4, dashArray: '5, 5', pane: 'diagnosticPane' },
             { id: 'revetement', url: 'revetement.geojson', name: 'Revêtement défectueux', category: 'amenagement', color: '#7f8c8d', weight: 5, fillOpacity: 0.5, pane: 'diagnosticPane' },
+            { id: 'noamenagement', url: 'noamenagement.geojson', name: 'Absence d\'aménagement', category: 'amenagement', color: '#2c3e50', weight: 4, pane: 'diagnosticPane' },
+            { id: 'eau', url: 'eau.geojson', name: 'Zones d\'eau', category: 'amenagement', color: '#3498db', weight: 1, fillOpacity: 0.5, pane: 'diagnosticPane' },
+
+            // DIAGNOSTICS - SIGNALISATION
+            { id: 'traverse', url: 'traverse.geojson', name: 'Traversée non indiquée', category: 'signalisation', color: '#e74c3c', weight: 5, pane: 'diagnosticPane' },
+            { id: 'bandes', url: 'bandes.geojson', name: 'Bandes cyclables étroites', category: 'signalisation', color: '#3498db', weight: 4, pane: 'diagnosticPane' },
+            { id: 'bande', url: 'bande.geojson', name: 'Bandes cyclables étroites (B)', category: 'signalisation', color: '#ffa500', weight: 4, pane: 'diagnosticPane' },
+            { id: 'marquages', url: 'marquages.geojson', name: 'Marquage effacé', category: 'signalisation', color: '#95a5a6', weight: 4, dashArray: '5, 5', pane: 'diagnosticPane' },
             
-            // COUCHE EAU DÉPLACÉE ICI
-            { id: 'eau', url: 'eau.geojson', name: 'Zones d\'eau', category: 'amenagement', color: '#3498db', weight: 1, fillOpacity: 0.5, hiddenByDefault: true, pane: 'diagnosticPane' },
-            
-            // VEGETATION
+            // DIAGNOSTICS - COMPORTEMENT / RISQUES
             { id: 'vegetationsol', url: 'vegetationsol.geojson', name: 'Végétation au sol', category: 'comportement', color: '#27ae60', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
             { id: 'vegetationdebord', url: 'vegetationdebord.geojson', name: 'Végétation débordante', category: 'comportement', color: '#16a085', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
 
@@ -339,7 +341,6 @@
             }
             content += '</div>';
             
-            // Fix définitif pour la largeur : minWidth et maxWidth identiques
             layer.bindPopup(content, { 
                 maxWidth: 620, 
                 minWidth: 620,
