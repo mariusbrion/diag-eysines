@@ -37,7 +37,7 @@
             right: 10px;
             z-index: 1000;
             background: white;
-            width: 280px;
+            width: 300px;
             max-height: 90vh;
             overflow-y: auto;
             border-radius: 8px;
@@ -58,28 +58,53 @@
         }
 
         .category-block {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .category-header {
+            background: #fdfdfd;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 1px solid #eee;
+        }
+
+        .category-header:hover {
+            background: #f5f5f5;
         }
 
         .category-title {
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #7f8c8d;
-            margin-bottom: 10px;
-            display: block;
-            border-left: 3px solid var(--accent-color);
-            padding-left: 8px;
+            flex-grow: 1;
+            margin-left: 8px;
+        }
+
+        .category-content {
+            padding: 8px;
+            display: block; /* Géré par JS pour le repli */
+        }
+
+        .category-content.collapsed {
+            display: none;
         }
 
         .layer-item {
             display: flex;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             cursor: pointer;
-            padding: 6px;
+            padding: 4px;
             border-radius: 4px;
             transition: background 0.2s;
+            font-size: 0.9rem;
         }
 
         .layer-item:hover {
@@ -91,18 +116,11 @@
             cursor: pointer;
         }
 
-        .layer-item label {
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            width: 100%;
-        }
-
         .symbol {
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             margin-right: 10px;
-            border-radius: 3px;
+            border-radius: 2px;
             display: inline-block;
             border: 1px solid rgba(0,0,0,0.2);
             flex-shrink: 0;
@@ -122,15 +140,7 @@
             cursor: pointer;
             font-weight: bold;
             color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 8px;
             transition: all 0.2s;
-        }
-
-        .basemap-toggle:hover {
-            background: var(--bg-light);
-            transform: translateY(-2px);
         }
 
         /* Menu contextuel clic droit */
@@ -150,7 +160,6 @@
             cursor: pointer;
             font-size: 0.9rem;
             color: var(--primary-color);
-            transition: background 0.2s;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -160,7 +169,7 @@
             background: var(--bg-light);
         }
 
-        /* Photos des popups forcées en grand format */
+        /* Photos des popups grand format */
         .popup-photo {
             width: 600px !important; 
             max-width: 100% !important;
@@ -170,35 +179,12 @@
             display: block;
         }
 
-        /* Ajustement du conteneur Leaflet pour accepter la largeur */
-        .leaflet-popup-content-wrapper {
-            border-radius: 12px;
-            padding: 5px;
-        }
-
-        .leaflet-popup-content {
-            width: 620px !important; /* Force la largeur du cadre */
-            margin: 15px !important;
-        }
-
-        .popup-content b {
-            color: var(--primary-color);
-            display: block;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-        }
+        .leaflet-popup-content-wrapper { border-radius: 12px; padding: 5px; }
+        .leaflet-popup-content { width: 620px !important; margin: 15px !important; }
 
         @media (max-width: 700px) {
-            #custom-legend {
-                width: 220px;
-                font-size: 0.9rem;
-            }
-            .leaflet-popup-content {
-                width: 280px !important;
-            }
-            .popup-photo {
-                width: 100% !important;
-            }
+            #custom-legend { width: 240px; }
+            .leaflet-popup-content { width: 280px !important; }
         }
     </style>
 </head>
@@ -206,29 +192,11 @@
 
     <div id="custom-legend">
         <div class="legend-header">
-            <h2>Diagnostic</h2>
+            <h2>Diagnostic Cyclable</h2>
         </div>
         
-        <div id="category-list">
-            <div class="category-block">
-                <span class="category-title">Aménagement défaillant</span>
-                <div id="cat-amenagement"></div>
-            </div>
-
-            <div class="category-block">
-                <span class="category-title">Signalisation défaillante</span>
-                <div id="cat-signalisation"></div>
-            </div>
-
-            <div class="category-block">
-                <span class="category-title">Risques & Comportements</span>
-                <div id="cat-comportement"></div>
-            </div>
-
-            <div class="category-block" style="border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px;">
-                <span class="category-title">Données de contexte</span>
-                <div id="cat-contexte"></div>
-            </div>
+        <div id="legend-container">
+            <!-- Les blocs de catégories seront générés par JS -->
         </div>
     </div>
 
@@ -249,18 +217,20 @@
         // Définition de la projection CC45 (EPSG:3945)
         proj4.defs("EPSG:3945","+proj=lcc +lat_1=44.25 +lat_2=45.75 +lat_0=45 +lon_0=3 +x_0=1700000 +y_0=4200000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
-        // Initialisation de la carte avec un zoom d'un cran supplémentaire (15)
-        const map = L.map('map').setView([44.87826446160561, -0.6565541041113465], 15);
+        const map = L.map('map').setView([44.87826446160561, -0.6565541041113465], 14.5);
 
         // --- GESTION DE L'ORDRE DES COUCHES ---
         map.createPane('contextPane');
-        map.getPane('contextPane').style.zIndex = 350;
+        map.getPane('contextPane').style.zIndex = 350; // Fond (métropole, eau)
+        
+        map.createPane('backgroundPane');
+        map.getPane('backgroundPane').style.zIndex = 400; // Couches de base (No Aménagement)
         
         map.createPane('diagnosticPane');
-        map.getPane('diagnosticPane').style.zIndex = 450;
+        map.getPane('diagnosticPane').style.zIndex = 450; // Diagnostics (Points, giration, etc)
 
         const voyagerLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
             maxZoom: 20
         }).addTo(map);
 
@@ -283,7 +253,7 @@
             isSatellite = !isSatellite;
         }
 
-        // Context Menu
+        // Context Menu Logic
         let currentContextMenuCoords = null;
         const contextMenu = document.getElementById('context-menu');
         map.on('contextmenu', (e) => {
@@ -300,52 +270,54 @@
         }
 
         const layers = {};
+        const categories = {
+            amenagement: { title: "Aménagement défaillant", contentId: "cat-amenagement" },
+            signalisation: { title: "Signalisation défaillante", contentId: "cat-signalisation" },
+            comportement: { title: "Risques & Comportements", contentId: "cat-comportement" },
+            contexte: { title: "Données de contexte", contentId: "cat-contexte" }
+        };
 
         const layerConfigs = [
             // DIAGNOSTICS - AMÉNAGEMENT
             { id: 'giration', url: 'giration.geojson', name: 'Angle de giration serré', category: 'amenagement', color: '#9b59b6', weight: 4, pane: 'diagnosticPane' },
             { id: 'cone', url: 'cone.geojson', name: 'Cône de visibilité', category: 'amenagement', color: '#f1c40f', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
-            { id: 'terreplein', url: 'terreplein.geojson', name: 'Terre-plein', category: 'amenagement', color: '#e67e22', weight: 3, pane: 'diagnosticPane' },
             { id: 'revetement', url: 'revetement.geojson', name: 'Revêtement défectueux', category: 'amenagement', color: '#7f8c8d', weight: 5, fillOpacity: 0.5, pane: 'diagnosticPane' },
-            { id: 'noamenagement', url: 'noamenagement.geojson', name: 'Absence d\'aménagement', category: 'amenagement', color: '#2c3e50', weight: 4, pane: 'diagnosticPane' },
-            { id: 'eau', url: 'eau.geojson', name: 'Zones d\'eau', category: 'amenagement', color: '#3498db', weight: 1, fillOpacity: 0.5, pane: 'diagnosticPane' },
-
+            { id: 'noamenagement', url: 'noamenagement.geojson', name: 'Absence d\'aménagement', category: 'amenagement', color: '#2c3e50', weight: 4, pane: 'backgroundPane' },
+            
             // DIAGNOSTICS - SIGNALISATION
             { id: 'traverse', url: 'traverse.geojson', name: 'Traversée non indiquée', category: 'signalisation', color: '#e74c3c', weight: 5, pane: 'diagnosticPane' },
             { id: 'bandes', url: 'bandes.geojson', name: 'Bandes cyclables étroites', category: 'signalisation', color: '#3498db', weight: 4, pane: 'diagnosticPane' },
-            { id: 'bande', url: 'bande.geojson', name: 'Bandes cyclables étroites (B)', category: 'signalisation', color: '#ffa500', weight: 4, pane: 'diagnosticPane' },
+            { id: 'bande', url: 'bande.geojson', name: 'Bandes cyclables étroites (B)', category: 'signalisation', color: '#e67e22', weight: 4, pane: 'diagnosticPane' },
             { id: 'marquages', url: 'marquages.geojson', name: 'Marquage effacé', category: 'signalisation', color: '#95a5a6', weight: 4, dashArray: '5, 5', pane: 'diagnosticPane' },
             
-            // DIAGNOSTICS - COMPORTEMENT / RISQUES
-            { id: 'vegetationsol', url: 'vegetationsol.geojson', name: 'Végétation au sol', category: 'comportement', color: '#27ae60', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
-            { id: 'vegetationdebord', url: 'vegetationdebord.geojson', name: 'Végétation débordante', category: 'comportement', color: '#16a085', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
+            // DIAGNOSTICS - COMPORTEMENT / VÉGÉTATION
+            { id: 'vegetation', url: 'vegetation.geojson', name: 'Végétation (entretien ST)', category: 'comportement', color: '#27ae60', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
+            { id: 'vegetationparticulier', url: 'vegetationparticulier.geojson', name: 'Végétation (riverains)', category: 'comportement', color: '#16a085', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
 
             // CONTEXTE
+            { id: 'eau', url: 'eau.geojson', name: 'Zones d\'eau', category: 'contexte', color: '#3498db', weight: 1, fillOpacity: 0.5, pane: 'contextPane' },
             { id: 'metropole', url: 'proprietemetropole.geojson', name: 'Propriété Métropole', category: 'contexte', color: '#d35400', weight: 3, fillOpacity: 0.1, hiddenByDefault: true, pane: 'contextPane' },
             { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#16a085', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' }
         ];
 
         function onEachFeature(feature, layer, configId) {
             let content = '<div class="popup-content">';
-            
-            if (configId === 'metropole' && feature.properties.SOUS_THEME) {
-                content += `<b>${feature.properties.SOUS_THEME}</b>`;
-                if (feature.properties.id) content += `<br><small>ID: ${feature.properties.id}</small>`;
+            const props = feature.properties;
+
+            if (configId === 'metropole' && props.SOUS_THEME) {
+                content += `<b>${props.SOUS_THEME}</b>`;
+                if (props.id) content += `<br><small>ID: ${props.id}</small>`;
             } else {
-                const description = feature.properties.description || feature.properties.Notes || 'Information';
-                content += `<b>${description}</b>`;
+                const desc = props.description || props.Notes || 'Information';
+                content += `<b>${desc}</b>`;
             }
             
-            if (feature.properties.photo || feature.properties.Photo) {
-                content += `<br><img src="${feature.properties.photo || feature.properties.Photo}" class="popup-photo" alt="Photo" onerror="this.style.display='none'">`;
+            if (props.photo || props.Photo) {
+                content += `<br><img src="${props.photo || props.Photo}" class="popup-photo" alt="Photo" onerror="this.style.display='none'">`;
             }
             content += '</div>';
             
-            layer.bindPopup(content, { 
-                maxWidth: 620, 
-                minWidth: 620,
-                className: 'custom-popup'
-            });
+            layer.bindPopup(content, { maxWidth: 620, minWidth: 620 });
         }
 
         async function loadGeoLayer(config) {
@@ -353,11 +325,10 @@
                 const response = await fetch(config.url);
                 if (!response.ok) return;
                 const data = await response.json();
-
-                let needsReprojection = (data.crs && JSON.stringify(data.crs).includes('3945'));
+                const needsReprojection = (data.crs && JSON.stringify(data.crs).includes('3945'));
                 
                 const layer = L.geoJSON(data, {
-                    coordsToLatLng: function (coords) {
+                    coordsToLatLng: (coords) => {
                         if (needsReprojection || coords[0] > 1000) {
                             var pt = proj4("EPSG:3945", "EPSG:4326", [coords[0], coords[1]]);
                             return new L.LatLng(pt[1], pt[0]);
@@ -365,62 +336,88 @@
                         return new L.LatLng(coords[1], coords[0]);
                     },
                     style: (feature) => {
-                        let styleObj = {
-                            color: config.color,
-                            weight: config.weight,
-                            opacity: 1,
-                            fillColor: config.color,
-                            fillOpacity: config.fill === false ? 0 : (config.fillOpacity || 0.2),
-                            dashArray: config.dashArray || null,
-                            pane: config.pane || 'overlayPane'
+                        let s = {
+                            color: config.color, weight: config.weight, opacity: 1,
+                            fillColor: config.color, fillOpacity: config.fill === false ? 0 : (config.fillOpacity || 0.2),
+                            dashArray: config.dashArray || null, pane: config.pane
                         };
-
-                        if (config.id === 'metropole' && feature.properties && feature.properties.SOUS_THEME === "COMMUNES") {
-                            styleObj.fillColor = '#3498db'; 
-                            styleObj.fillOpacity = 0.4;
-                            styleObj.color = '#2980b9';
+                        if (config.id === 'metropole' && feature.properties) {
+                            if (feature.properties.SOUS_THEME === "COMMUNES") {
+                                s.fillColor = '#3498db'; s.fillOpacity = 0.4; s.color = '#2980b9';
+                            } else if (feature.properties.SOUS_THEME === "METROPOLE") {
+                                s.fillColor = '#1a5276'; s.fillOpacity = 0.5; s.color = '#154360';
+                            }
                         }
-                        
-                        if (config.id === 'metropole' && feature.properties && feature.properties.SOUS_THEME === "METROPOLE") {
-                            styleObj.fillColor = '#1a5276'; 
-                            styleObj.fillOpacity = 0.5;
-                            styleObj.color = '#154360';
-                        }
-
-                        return styleObj;
+                        return s;
                     },
-                    pointToLayer: (f, latlng) => L.circleMarker(latlng, { 
-                        radius: 8, 
-                        fillColor: config.color, 
-                        color: "#fff", 
-                        weight: 2, 
-                        opacity: 1, 
-                        fillOpacity: 0.8,
-                        pane: config.pane || 'overlayPane'
-                    }),
+                    pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 8, fillColor: config.color, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8, pane: config.pane }),
                     onEachFeature: (f, l) => onEachFeature(f, l, config.id)
                 });
 
                 layers[config.id] = layer;
                 if (!config.hiddenByDefault) layer.addTo(map);
                 addLayerToUI(config);
-            } catch (e) { console.warn("Erreur chargement " + config.url, e); }
+            } catch (e) { console.warn("Erreur chargement " + config.url); }
+        }
+
+        function initLegendUI() {
+            const container = document.getElementById('legend-container');
+            Object.keys(categories).forEach(key => {
+                const cat = categories[key];
+                const block = document.createElement('div');
+                block.className = 'category-block';
+                block.innerHTML = `
+                    <div class="category-header">
+                        <input type="checkbox" checked id="master-${key}">
+                        <span class="category-title">${cat.title}</span>
+                        <small style="margin-left:5px">▼</small>
+                    </div>
+                    <div class="category-content" id="${cat.contentId}"></div>
+                `;
+                
+                // Toggle Category Content (Repli)
+                block.querySelector('.category-title').onclick = () => {
+                    block.querySelector('.category-content').classList.toggle('collapsed');
+                };
+
+                // Master Checkbox Logic (Tout décocher)
+                block.querySelector(`#master-${key}`).onchange = (e) => {
+                    const checked = e.target.checked;
+                    const items = block.querySelectorAll('.layer-item input');
+                    items.forEach(input => {
+                        if (input.checked !== checked) {
+                            input.checked = checked;
+                            input.dispatchEvent(new Event('change'));
+                        }
+                    });
+                };
+
+                container.appendChild(block);
+            });
         }
 
         function addLayerToUI(config) {
-            const container = document.getElementById(`cat-${config.category}`);
-            if (!container) return;
+            const container = document.getElementById(categories[config.category].contentId);
             const div = document.createElement('div');
             div.className = 'layer-item';
-            div.innerHTML = `<input type="checkbox" id="chk-${config.id}" ${!config.hiddenByDefault ? 'checked' : ''}><label for="chk-${config.id}"><span class="symbol" style="background:${config.color}"></span>${config.name}</label>`;
-            div.querySelector('input').addEventListener('change', (e) => {
+            div.innerHTML = `
+                <input type="checkbox" id="chk-${config.id}" ${!config.hiddenByDefault ? 'checked' : ''}>
+                <label for="chk-${config.id}" style="display:flex; align-items:center">
+                    <span class="symbol" style="background:${config.color}"></span>
+                    ${config.name}
+                </label>
+            `;
+            div.querySelector('input').onchange = (e) => {
                 if (e.target.checked) map.addLayer(layers[config.id]);
                 else map.removeLayer(layers[config.id]);
-            });
+            };
             container.appendChild(div);
         }
 
-        window.onload = () => layerConfigs.forEach(loadGeoLayer);
+        window.onload = () => {
+            initLegendUI();
+            layerConfigs.forEach(loadGeoLayer);
+        };
     </script>
 </body>
 </html>
