@@ -69,7 +69,6 @@
             padding: 8px 10px;
             display: flex;
             align-items: center;
-            cursor: pointer;
             user-select: none;
             border-bottom: 1px solid #eee;
         }
@@ -78,18 +77,24 @@
             background: #f5f5f5;
         }
 
+        .category-title-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
         .category-title {
             font-weight: bold;
             text-transform: uppercase;
             font-size: 0.75rem;
             color: #7f8c8d;
-            flex-grow: 1;
-            margin-left: 8px;
         }
 
         .category-content {
             padding: 8px;
-            display: block; /* Géré par JS pour le repli */
+            display: block;
         }
 
         .category-content.collapsed {
@@ -143,6 +148,11 @@
             transition: all 0.2s;
         }
 
+        .basemap-toggle:hover {
+            background: var(--bg-light);
+            transform: translateY(-2px);
+        }
+
         /* Menu contextuel clic droit */
         #context-menu {
             position: absolute;
@@ -160,6 +170,7 @@
             cursor: pointer;
             font-size: 0.9rem;
             color: var(--primary-color);
+            transition: background 0.2s;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -221,13 +232,13 @@
 
         // --- GESTION DE L'ORDRE DES COUCHES ---
         map.createPane('contextPane');
-        map.getPane('contextPane').style.zIndex = 350; // Fond (métropole, eau)
+        map.getPane('contextPane').style.zIndex = 350; 
         
         map.createPane('backgroundPane');
-        map.getPane('backgroundPane').style.zIndex = 400; // Couches de base (No Aménagement)
+        map.getPane('backgroundPane').style.zIndex = 400; 
         
         map.createPane('diagnosticPane');
-        map.getPane('diagnosticPane').style.zIndex = 450; // Diagnostics (Points, giration, etc)
+        map.getPane('diagnosticPane').style.zIndex = 450; 
 
         const voyagerLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap &copy; CARTO',
@@ -283,19 +294,19 @@
             { id: 'cone', url: 'cone.geojson', name: 'Cône de visibilité', category: 'amenagement', color: '#f1c40f', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
             { id: 'revetement', url: 'revetement.geojson', name: 'Revêtement défectueux', category: 'amenagement', color: '#7f8c8d', weight: 5, fillOpacity: 0.5, pane: 'diagnosticPane' },
             { id: 'noamenagement', url: 'noamenagement.geojson', name: 'Absence d\'aménagement', category: 'amenagement', color: '#2c3e50', weight: 4, pane: 'backgroundPane' },
+            { id: 'eau', url: 'eau.geojson', name: 'Zones d\'eau', category: 'amenagement', color: '#3498db', weight: 1, fillOpacity: 0.5, pane: 'contextPane' },
             
             // DIAGNOSTICS - SIGNALISATION
             { id: 'traverse', url: 'traverse.geojson', name: 'Traversée non indiquée', category: 'signalisation', color: '#e74c3c', weight: 5, pane: 'diagnosticPane' },
-            { id: 'bandes', url: 'bandes.geojson', name: 'Bandes cyclables étroites', category: 'signalisation', color: '#3498db', weight: 4, pane: 'diagnosticPane' },
-            { id: 'bande', url: 'bande.geojson', name: 'Bandes cyclables étroites (B)', category: 'signalisation', color: '#e67e22', weight: 4, pane: 'diagnosticPane' },
+            { id: 'bandes', url: 'bandes.geojson', name: 'Bandes cyclables étroites', category: 'signalisation', color: '#e67e22', weight: 4, pane: 'diagnosticPane' },
             { id: 'marquages', url: 'marquages.geojson', name: 'Marquage effacé', category: 'signalisation', color: '#95a5a6', weight: 4, dashArray: '5, 5', pane: 'diagnosticPane' },
+            { id: 'sasvelo', url: 'sasvelo.geojson', name: 'Sas Vélo', category: 'signalisation', color: '#ffffff', weight: 4, pane: 'diagnosticPane' },
             
             // DIAGNOSTICS - COMPORTEMENT / VÉGÉTATION
             { id: 'vegetation', url: 'vegetation.geojson', name: 'Végétation (entretien ST)', category: 'comportement', color: '#27ae60', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
             { id: 'vegetationparticulier', url: 'vegetationparticulier.geojson', name: 'Végétation (riverains)', category: 'comportement', color: '#16a085', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
 
             // CONTEXTE
-            { id: 'eau', url: 'eau.geojson', name: 'Zones d\'eau', category: 'contexte', color: '#3498db', weight: 1, fillOpacity: 0.5, pane: 'contextPane' },
             { id: 'metropole', url: 'proprietemetropole.geojson', name: 'Propriété Métropole', category: 'contexte', color: '#d35400', weight: 3, fillOpacity: 0.1, hiddenByDefault: true, pane: 'contextPane' },
             { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#16a085', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' }
         ];
@@ -369,14 +380,16 @@
                 block.innerHTML = `
                     <div class="category-header">
                         <input type="checkbox" checked id="master-${key}">
-                        <span class="category-title">${cat.title}</span>
-                        <small style="margin-left:5px">▼</small>
+                        <div class="category-title-container" id="title-container-${key}">
+                            <span class="category-title">${cat.title}</span>
+                            <small style="margin-left:5px">▼</small>
+                        </div>
                     </div>
                     <div class="category-content" id="${cat.contentId}"></div>
                 `;
                 
-                // Toggle Category Content (Repli)
-                block.querySelector('.category-title').onclick = () => {
+                // Toggle Category Content (Repli cliquable sur le titre et la flèche)
+                block.querySelector(`#title-container-${key}`).onclick = () => {
                     block.querySelector('.category-content').classList.toggle('collapsed');
                 };
 
@@ -408,8 +421,11 @@
                 </label>
             `;
             div.querySelector('input').onchange = (e) => {
-                if (e.target.checked) map.addLayer(layers[config.id]);
-                else map.removeLayer(layers[config.id]);
+                if (e.target.checked) {
+                    if (layers[config.id]) map.addLayer(layers[config.id]);
+                } else {
+                    if (layers[config.id]) map.removeLayer(layers[config.id]);
+                }
             };
             container.appendChild(div);
         }
