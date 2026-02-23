@@ -1,1 +1,109 @@
-
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 79,
+        "type": "Amenagement",
+        "description": "Risque pour les cyclistes de continuer sur la voie inverse (du fait de l'angle de giration trop aigue et du manque de visibilité) alors même que celle-ci se situent à proximité directe de trois établissement scolaire",
+        "photo": "20260217_101455.jpg"
+      },
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              -0.646768712654626,
+              44.87959050357785
+            ],
+            [
+              -0.638483994498963,
+              44.87550038335216
+            ],
+            [
+              -0.639031911753139,
+              44.874952745529335
+            ],
+            [
+              -0.6470573617540556,
+              44.87930441218406
+            ],
+            [
+              -0.646768712654626,
+              44.87959050357785
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 75,
+        "type": "Signa",
+        "description": "Continuité cyclable mal indiquée risque de conflit avec des piétons/automobilistes alors qu'une infrastructure dédiée existe",
+        "photo": "20260217_100921.jpg"
+      },
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              -0.6334690968023425,
+              44.872840930847666
+            ],
+            [
+              -0.6333212467561252,
+              44.87262044673023
+            ],
+            [
+              -0.6335597512401294,
+              44.87267131370412
+            ],
+            [
+              -0.6334690968023425,
+              44.872840930847666
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 96,
+        "type": "Amenage",
+        "description": "Voie vélo passant sur un trottoir étroit malgré la présence d'une voie bus?",
+        "photo": "20260217_105407.jpg"
+      },
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              -0.636580536570986,
+              44.887181109492595
+            ],
+            [
+              -0.636212903620914,
+              44.88521504335544
+            ],
+            [
+              -0.63645584193591,
+              44.88520728719713
+            ],
+            [
+              -0.637028605127197,
+              44.88711735779832
+            ],
+            [
+              -0.636580536570986,
+              44.887181109492595
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      }
+    }
+  ]
+}
