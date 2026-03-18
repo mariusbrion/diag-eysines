@@ -240,6 +240,10 @@
         map.createPane('diagnosticPane');
         map.getPane('diagnosticPane').style.zIndex = 450; 
 
+        // Pane spéciale pour la couche projet (au dessus de tout)
+        map.createPane('projectPane');
+        map.getPane('projectPane').style.zIndex = 600;
+
         const voyagerLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap &copy; CARTO',
             maxZoom: 20
@@ -310,7 +314,8 @@
 
             // CONTEXTE
             { id: 'metropole', url: 'proprietemetropole.geojson', name: 'Propriété Métropole', category: 'contexte', color: '#d35400', weight: 3, fillOpacity: 0.1, hiddenByDefault: true, pane: 'contextPane' },
-            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#16a085', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' }
+            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#16a085', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' },
+            { id: 'projet', url: 'projet.geojson', name: 'Projets', category: 'contexte', color: '#e91e63', weight: 6, hiddenByDefault: true, pane: 'projectPane' }
         ];
 
         function onEachFeature(feature, layer, configId) {
@@ -320,6 +325,8 @@
             if (configId === 'metropole' && props.SOUS_THEME) {
                 content += `<b>${props.SOUS_THEME}</b>`;
                 if (props.id) content += `<br><small>ID: ${props.id}</small>`;
+            } else if (configId === 'projet') {
+                content += `<b>${props.GO_DESCRIPTION || 'Aucune description disponible'}</b>`;
             } else {
                 const desc = props.description || props.Notes || 'Information';
                 content += `<b>${desc}</b>`;
