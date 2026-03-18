@@ -193,6 +193,18 @@
         .leaflet-popup-content-wrapper { border-radius: 12px; padding: 5px; }
         .leaflet-popup-content { width: 620px !important; margin: 15px !important; }
 
+        /* Style pour les étiquettes de texte (tooltips permanents) */
+        .project-label {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid #e91e63;
+            border-radius: 4px;
+            color: #e91e63;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 2px 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
         @media (max-width: 700px) {
             #custom-legend { width: 240px; }
             .leaflet-popup-content { width: 280px !important; }
@@ -319,14 +331,25 @@
         ];
 
         function onEachFeature(feature, layer, configId) {
-            let content = '<div class="popup-content">';
             const props = feature.properties;
 
+            // Logique spécifique pour la couche PROJET : Étiquette permanente
+            if (configId === 'projet') {
+                const text = props.GO_DESCRITION || 'Projet';
+                layer.bindTooltip(text, { 
+                    permanent: true, 
+                    direction: 'center', 
+                    className: 'project-label',
+                    sticky: false
+                });
+                return; // On ne met pas de popup pour le projet comme demandé
+            }
+
+            // Logique pour les autres couches : Fenêtre Popup
+            let content = '<div class="popup-content">';
             if (configId === 'metropole' && props.SOUS_THEME) {
                 content += `<b>${props.SOUS_THEME}</b>`;
                 if (props.id) content += `<br><small>ID: ${props.id}</small>`;
-            } else if (configId === 'projet') {
-                content += `<b>${props.GO_DESCRIPTION || 'Aucune description disponible'}</b>`;
             } else {
                 const desc = props.description || props.Notes || 'Information';
                 content += `<b>${desc}</b>`;
