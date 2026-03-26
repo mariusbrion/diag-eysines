@@ -161,6 +161,17 @@
             border-color: var(--primary-color);
         }
 
+        /* Effet palpitant pour les projets */
+        @keyframes project-pulse {
+            0% { stroke-opacity: 0.5; filter: drop-shadow(0 0 0px var(--project-color)); }
+            50% { stroke-opacity: 1; filter: drop-shadow(0 0 3px var(--project-color)); }
+            100% { stroke-opacity: 0.5; filter: drop-shadow(0 0 0px var(--project-color)); }
+        }
+
+        .pulsing-path {
+            animation: project-pulse 2.5s infinite ease-in-out;
+        }
+
         /* Tooltips et Popups */
         .project-label {
             background: rgba(44, 62, 80, 0.9);
@@ -276,14 +287,14 @@
                             },
                             style: {
                                 color: '#2980b9', 
-                                weight: 3,        // Épaisseur réduite pour un rendu pro
+                                weight: 3,
                                 opacity: 0.8,
                                 fillColor: '#2980b9',
-                                fillOpacity: 0.1  // Très transparent pour voir le fond
+                                fillOpacity: 0.1,
+                                className: 'pulsing-path' // Ajout de la classe d'animation
                             },
                             onEachFeature: (feature, layer) => {
                                 const desc = feature.properties.GO_DESCRITION || feature.properties.description || "Projet d'aménagement";
-                                // Pas de Tooltip permanent ici comme demandé
                                 layer.bindPopup(`<strong>PROJET :</strong><br>${desc}`);
                             }
                         });
@@ -322,14 +333,12 @@
             { id: 'risquedeconflit', url: 'risquedeconflit.geojson', name: 'Risque de conflit', category: 'comportement', color: '#c0392b', weight: 4, pane: 'backgroundPane' },
             { id: 'metropole', url: 'proprietemetropole.geojson', name: 'Propriété Métropole', category: 'contexte', color: '#d35400', weight: 3, fillOpacity: 0.1, hiddenByDefault: true, pane: 'contextPane' },
             { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#16a085', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' },
-            // Couche projet de contexte (garder les étiquettes ici)
             { id: 'projet', url: 'projet.geojson', name: 'Projets existants', category: 'contexte', color: '#e91e63', weight: 4, hiddenByDefault: true, pane: 'projectPane' }
         ];
 
         function onEachFeature(feature, layer, configId) {
             const props = feature.properties;
             
-            // On garde les étiquettes seulement pour la couche singulière "projet"
             if (configId === 'projet') {
                 const text = props.GO_DESCRITION || props.description || 'Projet';
                 layer.bindTooltip(text, { permanent: true, direction: 'center', className: 'project-label' });
