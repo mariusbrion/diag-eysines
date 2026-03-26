@@ -13,7 +13,7 @@
         :root {
             --primary-color: #2c3e50;
             --accent-color: #3498db;
-            --project-color: #2980b9; 
+            --project-color: #3498db; 
             --bg-light: #f8f9fa;
         }
 
@@ -161,15 +161,16 @@
             border-color: var(--primary-color);
         }
 
-        /* Effet palpitant pour les projets */
-        @keyframes project-pulse {
-            0% { stroke-opacity: 0.5; filter: drop-shadow(0 0 0px var(--project-color)); }
-            50% { stroke-opacity: 1; filter: drop-shadow(0 0 3px var(--project-color)); }
-            100% { stroke-opacity: 0.5; filter: drop-shadow(0 0 0px var(--project-color)); }
+        /* Effet de ligne "courante" sur le pourtour */
+        @keyframes flow-line {
+            from { stroke-dashoffset: 100; }
+            to { stroke-dashoffset: 0; }
         }
 
-        .pulsing-path {
-            animation: project-pulse 2.5s infinite ease-in-out;
+        .flowing-path {
+            stroke-dasharray: 10, 10; /* Alternance ligne/vide */
+            animation: flow-line 2s linear infinite;
+            filter: drop-shadow(0 0 2px var(--project-color));
         }
 
         /* Tooltips et Popups */
@@ -286,12 +287,12 @@
                                 return new L.LatLng(coords[1], coords[0]);
                             },
                             style: {
-                                color: '#2980b9', 
+                                color: '#3498db', 
                                 weight: 3,
-                                opacity: 0.8,
-                                fillColor: '#2980b9',
-                                fillOpacity: 0.1,
-                                className: 'pulsing-path' // Ajout de la classe d'animation
+                                opacity: 1,
+                                fillColor: '#3498db',
+                                fillOpacity: 0.05,
+                                className: 'flowing-path' // Application de l'animation de flux
                             },
                             onEachFeature: (feature, layer) => {
                                 const desc = feature.properties.GO_DESCRITION || feature.properties.description || "Projet d'aménagement";
