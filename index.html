@@ -168,9 +168,26 @@
         }
 
         .flowing-path {
-            stroke-dasharray: 10, 10; /* Alternance ligne/vide */
-            animation: flow-line 2s linear infinite;
+            stroke-dasharray: 10, 10;
+            animation: flow-line 6s linear infinite; /* Vitesse ralentie à 6s */
             filter: drop-shadow(0 0 2px var(--project-color));
+        }
+
+        /* Pastilles numérotées pour les projets */
+        .project-number-marker {
+            background: var(--primary-color);
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+            pointer-events: none;
         }
 
         /* Tooltips et Popups */
@@ -260,6 +277,7 @@
         }
 
         let projetsLayer = null;
+        let projectNumbersGroup = L.layerGroup();
         let isProjetsVisible = false;
 
         async function toggleProjets() {
@@ -267,6 +285,7 @@
             
             if (isProjetsVisible) {
                 if (projetsLayer) map.removeLayer(projetsLayer);
+                map.removeLayer(projectNumbersGroup);
                 btn.classList.remove('active');
                 isProjetsVisible = false;
             } else {
@@ -277,6 +296,7 @@
                         if (!response.ok) throw new Error("Fichier introuvable");
                         const data = await response.json();
                         
+                        let counter = 0;
                         projetsLayer = L.geoJSON(data, {
                             pane: 'projectPane',
                             coordsToLatLng: (coords) => {
@@ -292,11 +312,30 @@
                                 opacity: 1,
                                 fillColor: '#3498db',
                                 fillOpacity: 0.05,
-                                className: 'flowing-path' // Application de l'animation de flux
+                                className: 'flowing-path'
                             },
                             onEachFeature: (feature, layer) => {
+                                counter++;
                                 const desc = feature.properties.GO_DESCRITION || feature.properties.description || "Projet d'aménagement";
-                                layer.bindPopup(`<strong>PROJET :</strong><br>${desc}`);
+                                layer.bindPopup(`<strong>PROJET N°${counter} :</strong><br>${desc}`);
+                                
+                                // Calcul du centre pour poser le numéro
+                                let center;
+                                if (layer.getBounds) {
+                                    center = layer.getBounds().getCenter();
+                                } else if (layer.getLatLng) {
+                                    center = layer.getLatLng();
+                                }
+
+                                if (center) {
+                                    const numberIcon = L.divIcon({
+                                        className: 'project-number-marker',
+                                        html: counter,
+                                        iconSize: [22, 22],
+                                        iconAnchor: [11, 11]
+                                    });
+                                    L.marker(center, { icon: numberIcon, pane: 'projectPane' }).addTo(projectNumbersGroup);
+                                }
                             }
                         });
                     } catch (e) {
@@ -306,6 +345,7 @@
                     }
                 }
                 projetsLayer.addTo(map);
+                projectNumbersGroup.addTo(map);
                 isProjetsVisible = true;
             }
         }
