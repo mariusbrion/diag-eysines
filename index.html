@@ -13,7 +13,7 @@
         :root {
             --primary-color: #2c3e50;
             --accent-color: #3498db;
-            --project-color: #00f2ff; /* Couleur cyan néon pour les projets */
+            --project-color: #2980b9; 
             --bg-light: #f8f9fa;
         }
 
@@ -21,7 +21,7 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
         }
 
@@ -31,51 +31,47 @@
             z-index: 1;
         }
 
-        /* Panneau de contrôle personnalisé */
+        /* Panneau de contrôle */
         #custom-legend {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 15px;
+            right: 15px;
             z-index: 1000;
             background: white;
-            width: 300px;
-            max-height: 90vh;
+            width: 280px;
+            max-height: 85vh;
             overflow-y: auto;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             padding: 15px;
+            border: 1px solid #ddd;
         }
 
         .legend-header {
-            border-bottom: 2px solid var(--bg-light);
-            margin-bottom: 15px;
-            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
         }
 
         .legend-header h2 {
             margin: 0;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--primary-color);
+            letter-spacing: 0.5px;
         }
 
         .category-block {
-            margin-bottom: 15px;
-            border: 1px solid #eee;
-            border-radius: 6px;
-            overflow: hidden;
+            margin-bottom: 10px;
+            border: 1px solid #f0f0f0;
+            border-radius: 4px;
         }
 
         .category-header {
-            background: #fdfdfd;
-            padding: 8px 10px;
+            background: #fafafa;
+            padding: 6px 10px;
             display: flex;
             align-items: center;
             user-select: none;
-            border-bottom: 1px solid #eee;
-        }
-
-        .category-header:hover {
-            background: #f5f5f5;
         }
 
         .category-title-container {
@@ -87,15 +83,14 @@
         }
 
         .category-title {
-            font-weight: bold;
+            font-weight: 600;
             text-transform: uppercase;
-            font-size: 0.75rem;
-            color: #7f8c8d;
+            font-size: 0.7rem;
+            color: #95a5a6;
         }
 
         .category-content {
-            padding: 8px;
-            display: block;
+            padding: 5px;
         }
 
         .category-content.collapsed {
@@ -105,65 +100,59 @@
         .layer-item {
             display: flex;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             cursor: pointer;
-            padding: 4px;
+            padding: 4px 6px;
             border-radius: 4px;
-            transition: background 0.2s;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .layer-item:hover {
-            background: var(--bg-light);
+            background: #f0f4f8;
         }
 
         .layer-item input {
-            margin-right: 10px;
-            cursor: pointer;
+            margin-right: 8px;
         }
 
         .symbol {
-            width: 12px;
-            height: 12px;
-            margin-right: 10px;
-            border-radius: 2px;
+            width: 10px;
+            height: 10px;
+            margin-right: 8px;
+            border-radius: 50%;
             display: inline-block;
-            border: 1px solid rgba(0,0,0,0.2);
             flex-shrink: 0;
         }
 
-        /* Conteneur des boutons en bas à gauche */
+        /* Boutons de contrôle */
         .map-controls-left {
             position: absolute;
-            bottom: 20px;
+            bottom: 25px;
             left: 20px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
 
         .custom-button {
             background: white;
-            padding: 10px 20px;
-            border-radius: 50px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            border: 2px solid #fff;
+            padding: 12px 24px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border: 1px solid #ddd;
             cursor: pointer;
-            font-weight: bold;
+            font-size: 0.9rem;
+            font-weight: 500;
             color: var(--primary-color);
             transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            min-width: 200px;
+            min-width: 220px;
+            text-align: center;
         }
 
         .custom-button:hover {
-            background: var(--bg-light);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            background: #f8f9fa;
+            border-color: #ccc;
         }
 
         .custom-button.active {
@@ -172,62 +161,33 @@
             border-color: var(--primary-color);
         }
 
-        /* Menu contextuel clic droit */
-        #context-menu {
-            position: absolute;
-            z-index: 2000;
-            background: white;
-            border-radius: 4px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            display: none;
-            padding: 5px 0;
-            min-width: 180px;
-        }
-
-        .context-menu-item {
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            color: var(--primary-color);
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .context-menu-item:hover {
-            background: var(--bg-light);
-        }
-
-        /* Photos des popups grand format */
-        .popup-photo {
-            width: 600px !important; 
-            max-width: 100% !important;
-            height: auto;
-            border-radius: 4px;
-            margin-top: 10px;
-            display: block;
-        }
-
-        .leaflet-popup-content-wrapper { border-radius: 12px; padding: 5px; }
-        .leaflet-popup-content { width: 620px !important; margin: 15px !important; }
-
-        /* Style pour les étiquettes de texte (tooltips permanents) */
+        /* Tooltips et Popups */
         .project-label {
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid var(--project-color);
-            border-radius: 4px;
-            color: var(--project-color);
-            font-weight: bold;
-            font-size: 11px;
-            padding: 2px 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            background: rgba(44, 62, 80, 0.9);
+            border: 1px solid #fff;
+            border-radius: 3px;
+            color: white;
+            font-weight: 500;
+            font-size: 10px;
+            padding: 1px 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
             pointer-events: none;
         }
 
+        .popup-photo {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+
+        .leaflet-popup-content-wrapper { border-radius: 8px; }
+        .leaflet-popup-content { width: 500px !important; margin: 15px !important; line-height: 1.4; }
+
         @media (max-width: 700px) {
-            #custom-legend { width: 240px; }
-            .leaflet-popup-content { width: 280px !important; }
+            #custom-legend { width: 220px; }
+            .leaflet-popup-content { width: 260px !important; }
+            .custom-button { min-width: 180px; padding: 10px; }
         }
     </style>
 </head>
@@ -237,61 +197,39 @@
         <div class="legend-header">
             <h2>Diagnostic Cyclable</h2>
         </div>
-        
-        <div id="legend-container">
-            <!-- Les blocs de catégories seront générés par JS -->
-        </div>
+        <div id="legend-container"></div>
     </div>
 
-    <!-- Conteneur des contrôles en bas à gauche -->
     <div class="map-controls-left">
         <button id="btn-projets" class="custom-button" onclick="toggleProjets()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <span>Proposition de projets</span>
+            Proposition de projets
         </button>
 
         <button class="custom-button" onclick="toggleBasemap()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <span id="toggle-text">Passer en Satellite</span>
         </button>
-    </div>
-
-    <div id="context-menu">
-        <div class="context-menu-item" onclick="openGoogleMaps()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-            Ouvrir dans Google Maps
-        </div>
     </div>
 
     <div id="map"></div>
 
     <script>
-        // Définition de la projection CC45 (EPSG:3945)
         proj4.defs("EPSG:3945","+proj=lcc +lat_1=44.25 +lat_2=45.75 +lat_0=45 +lon_0=3 +x_0=1700000 +y_0=4200000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
-        const map = L.map('map').setView([44.87826446160561, -0.6565541041113465], 14.5);
+        const map = L.map('map', { zoomControl: false }).setView([44.8782, -0.6565], 14.5);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // --- GESTION DE L'ORDRE DES COUCHES ---
-        map.createPane('contextPane');
-        map.getPane('contextPane').style.zIndex = 350; 
-        
-        map.createPane('backgroundPane');
-        map.getPane('backgroundPane').style.zIndex = 400; 
-        
-        map.createPane('diagnosticPane');
-        map.getPane('diagnosticPane').style.zIndex = 450; 
-
-        // Pane spéciale pour la couche projet (au dessus de tout le diagnostic)
-        map.createPane('projectPane');
-        map.getPane('projectPane').style.zIndex = 600;
+        map.createPane('contextPane').style.zIndex = 350; 
+        map.createPane('backgroundPane').style.zIndex = 400; 
+        map.createPane('diagnosticPane').style.zIndex = 450; 
+        map.createPane('projectPane').style.zIndex = 600;
 
         const voyagerLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap &copy; CARTO',
+            attribution: '&copy; CARTO',
             maxZoom: 20
         }).addTo(map);
 
         const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri',
+            attribution: 'Esri',
             maxZoom: 19
         });
 
@@ -309,7 +247,6 @@
             isSatellite = !isSatellite;
         }
 
-        // --- GESTION DE LA COUCHE PROJETS (projets.geojson) ---
         let projetsLayer = null;
         let isProjetsVisible = false;
 
@@ -331,7 +268,6 @@
                         projetsLayer = L.geoJSON(data, {
                             pane: 'projectPane',
                             coordsToLatLng: (coords) => {
-                                // Détection auto de la projection
                                 if (coords[0] > 1000) {
                                     var pt = proj4("EPSG:3945", "EPSG:4326", [coords[0], coords[1]]);
                                     return new L.LatLng(pt[1], pt[0]);
@@ -339,48 +275,26 @@
                                 return new L.LatLng(coords[1], coords[0]);
                             },
                             style: {
-                                color: '#00f2ff', // Cyan vif
-                                weight: 8,        // Bordure épaisse
+                                color: '#2980b9', 
+                                weight: 3,        // Épaisseur réduite pour un rendu pro
                                 opacity: 0.8,
-                                fillColor: '#00f2ff',
-                                fillOpacity: 0.25, // Transparence pour voir les couches dessous
-                                dashArray: '10, 10'
+                                fillColor: '#2980b9',
+                                fillOpacity: 0.1  // Très transparent pour voir le fond
                             },
                             onEachFeature: (feature, layer) => {
                                 const desc = feature.properties.GO_DESCRITION || feature.properties.description || "Projet d'aménagement";
-                                layer.bindTooltip(desc, { 
-                                    permanent: true, 
-                                    direction: 'center', 
-                                    className: 'project-label' 
-                                });
-                                // Popup au clic pour plus de détails
+                                // Pas de Tooltip permanent ici comme demandé
                                 layer.bindPopup(`<strong>PROJET :</strong><br>${desc}`);
                             }
                         });
                     } catch (e) {
-                        console.error("Erreur chargement projets.geojson:", e);
+                        console.error("Erreur projets.geojson:", e);
                         btn.classList.remove('active');
                         return;
                     }
                 }
                 projetsLayer.addTo(map);
                 isProjetsVisible = true;
-            }
-        }
-
-        // Context Menu Logic
-        let currentContextMenuCoords = null;
-        const contextMenu = document.getElementById('context-menu');
-        map.on('contextmenu', (e) => {
-            currentContextMenuCoords = e.latlng;
-            contextMenu.style.display = 'block';
-            contextMenu.style.left = e.containerPoint.x + 'px';
-            contextMenu.style.top = e.containerPoint.y + 'px';
-        });
-        document.addEventListener('click', () => contextMenu.style.display = 'none');
-        function openGoogleMaps() {
-            if (currentContextMenuCoords) {
-                window.open(`https://www.google.com/maps/search/?api=1&query=${currentContextMenuCoords.lat},${currentContextMenuCoords.lng}`, '_blank');
             }
         }
 
@@ -393,47 +307,43 @@
         };
 
         const layerConfigs = [
-            // DIAGNOSTICS - AMÉNAGEMENT
             { id: 'giration', url: 'giration.geojson', name: 'Angle de giration serré', category: 'amenagement', color: '#9b59b6', weight: 4, pane: 'diagnosticPane' },
             { id: 'cone', url: 'cone.geojson', name: 'Cône de visibilité', category: 'amenagement', color: '#f1c40f', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
             { id: 'revetement', url: 'revetement.geojson', name: 'Revêtement défectueux', category: 'amenagement', color: '#7f8c8d', weight: 5, fillOpacity: 0.5, pane: 'diagnosticPane' },
             { id: 'noamenagement', url: 'noamenagement.geojson', name: 'Absence d\'aménagement', category: 'amenagement', color: '#2c3e50', weight: 4, pane: 'backgroundPane' },
             { id: 'eau', url: 'eau.geojson', name: 'Zones d\'eau', category: 'amenagement', color: '#3498db', weight: 1, fillOpacity: 0.5, pane: 'contextPane' },
-            
-            // DIAGNOSTICS - SIGNALISATION
             { id: 'traverse', url: 'traverse.geojson', name: 'Traversée non indiquée', category: 'signalisation', color: '#e74c3c', weight: 5, pane: 'diagnosticPane' },
             { id: 'bandes', url: 'bandes.geojson', name: 'Bandes cyclables étroites', category: 'signalisation', color: '#e67e22', weight: 4, pane: 'diagnosticPane' },
             { id: 'marquages', url: 'marquages.geojson', name: 'Marquage effacé', category: 'signalisation', color: '#95a5a6', weight: 4, dashArray: '5, 5', pane: 'diagnosticPane' },
             { id: 'sasvelo', url: 'sasvelo.geojson', name: 'Sas Vélo', category: 'signalisation', color: '#ffffff', weight: 4, pane: 'diagnosticPane' },
-            
-            // DIAGNOSTICS - COMPORTEMENT / VÉGÉTATION
             { id: 'vegetation', url: 'vegetation.geojson', name: 'Végétation (entretien ST)', category: 'comportement', color: '#27ae60', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
             { id: 'vegetationparticulier', url: 'vegetationparticulier.geojson', name: 'Végétation (riverains)', category: 'comportement', color: '#16a085', weight: 2, fillOpacity: 0.4, pane: 'diagnosticPane' },
             { id: 'stationnement', url: 'stationnement.geojson', name: 'Stationnement gênant', category: 'comportement', color: '#f39c12', weight: 4, pane: 'diagnosticPane' },
             { id: 'risquedeconflit', url: 'risquedeconflit.geojson', name: 'Risque de conflit', category: 'comportement', color: '#c0392b', weight: 4, pane: 'backgroundPane' },
-
-            // CONTEXTE
             { id: 'metropole', url: 'proprietemetropole.geojson', name: 'Propriété Métropole', category: 'contexte', color: '#d35400', weight: 3, fillOpacity: 0.1, hiddenByDefault: true, pane: 'contextPane' },
-            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#16a085', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' }
+            { id: 'reseauxstructurant', url: 'reseauxstructurant.geojson', name: 'Réseau Structurant', category: 'contexte', color: '#16a085', weight: 3, fill: false, hiddenByDefault: true, pane: 'contextPane' },
+            // Couche projet de contexte (garder les étiquettes ici)
+            { id: 'projet', url: 'projet.geojson', name: 'Projets existants', category: 'contexte', color: '#e91e63', weight: 4, hiddenByDefault: true, pane: 'projectPane' }
         ];
 
         function onEachFeature(feature, layer, configId) {
             const props = feature.properties;
-            let content = '<div class="popup-content">';
-            if (configId === 'metropole' && props.SOUS_THEME) {
-                content += `<b>${props.SOUS_THEME}</b>`;
-                if (props.id) content += `<br><small>ID: ${props.id}</small>`;
-            } else {
-                const desc = props.description || props.Notes || 'Information';
-                content += `<b>${desc}</b>`;
+            
+            // On garde les étiquettes seulement pour la couche singulière "projet"
+            if (configId === 'projet') {
+                const text = props.GO_DESCRITION || props.description || 'Projet';
+                layer.bindTooltip(text, { permanent: true, direction: 'center', className: 'project-label' });
             }
+
+            let content = '<div class="popup-content">';
+            const desc = props.description || props.Notes || props.GO_DESCRITION || 'Information';
+            content += `<strong>${desc}</strong>`;
             
             if (props.photo || props.Photo) {
-                content += `<br><img src="${props.photo || props.Photo}" class="popup-photo" alt="Photo" onerror="this.style.display='none'">`;
+                content += `<br><img src="${props.photo || props.Photo}" class="popup-photo" alt="Observation" onerror="this.style.display='none'">`;
             }
             content += '</div>';
-            
-            layer.bindPopup(content, { maxWidth: 620, minWidth: 620 });
+            layer.bindPopup(content, { maxWidth: 500 });
         }
 
         async function loadGeoLayer(config) {
@@ -451,29 +361,19 @@
                         }
                         return new L.LatLng(coords[1], coords[0]);
                     },
-                    style: (feature) => {
-                        let s = {
-                            color: config.color, weight: config.weight, opacity: 1,
-                            fillColor: config.color, fillOpacity: config.fill === false ? 0 : (config.fillOpacity || 0.2),
-                            dashArray: config.dashArray || null, pane: config.pane
-                        };
-                        if (config.id === 'metropole' && feature.properties) {
-                            if (feature.properties.SOUS_THEME === "COMMUNES") {
-                                s.fillColor = '#3498db'; s.fillOpacity = 0.4; s.color = '#2980b9';
-                            } else if (feature.properties.SOUS_THEME === "METROPOLE") {
-                                s.fillColor = '#1a5276'; s.fillOpacity = 0.5; s.color = '#154360';
-                            }
-                        }
-                        return s;
-                    },
-                    pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 8, fillColor: config.color, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8, pane: config.pane }),
+                    style: (f) => ({
+                        color: config.color, weight: config.weight, opacity: 0.9,
+                        fillColor: config.color, fillOpacity: config.fill === false ? 0 : (config.fillOpacity || 0.2),
+                        dashArray: config.dashArray || null, pane: config.pane
+                    }),
+                    pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 7, fillColor: config.color, color: "#fff", weight: 1.5, fillOpacity: 0.8, pane: config.pane }),
                     onEachFeature: (f, l) => onEachFeature(f, l, config.id)
                 });
 
                 layers[config.id] = layer;
                 if (!config.hiddenByDefault) layer.addTo(map);
                 addLayerToUI(config);
-            } catch (e) { console.warn("Erreur chargement " + config.url); }
+            } catch (e) { console.warn("Echec: " + config.url); }
         }
 
         function initLegendUI() {
@@ -487,27 +387,22 @@
                         <input type="checkbox" checked id="master-${key}">
                         <div class="category-title-container" id="title-container-${key}">
                             <span class="category-title">${cat.title}</span>
-                            <small style="margin-left:5px">▼</small>
                         </div>
                     </div>
                     <div class="category-content" id="${cat.contentId}"></div>
                 `;
-                
                 block.querySelector(`#title-container-${key}`).onclick = () => {
                     block.querySelector('.category-content').classList.toggle('collapsed');
                 };
-
                 block.querySelector(`#master-${key}`).onchange = (e) => {
                     const checked = e.target.checked;
-                    const items = block.querySelectorAll('.layer-item input');
-                    items.forEach(input => {
+                    block.querySelectorAll('.layer-item input').forEach(input => {
                         if (input.checked !== checked) {
                             input.checked = checked;
                             input.dispatchEvent(new Event('change'));
                         }
                     });
                 };
-
                 container.appendChild(block);
             });
         }
@@ -518,17 +413,14 @@
             div.className = 'layer-item';
             div.innerHTML = `
                 <input type="checkbox" id="chk-${config.id}" ${!config.hiddenByDefault ? 'checked' : ''}>
-                <label for="chk-${config.id}" style="display:flex; align-items:center">
+                <label for="chk-${config.id}" style="display:flex; align-items:center; width:100%">
                     <span class="symbol" style="background:${config.color}"></span>
                     ${config.name}
                 </label>
             `;
             div.querySelector('input').onchange = (e) => {
-                if (e.target.checked) {
-                    if (layers[config.id]) map.addLayer(layers[config.id]);
-                } else {
-                    if (layers[config.id]) map.removeLayer(layers[config.id]);
-                }
+                if (e.target.checked) { if (layers[config.id]) map.addLayer(layers[config.id]); }
+                else { if (layers[config.id]) map.removeLayer(layers[config.id]); }
             };
             container.appendChild(div);
         }
